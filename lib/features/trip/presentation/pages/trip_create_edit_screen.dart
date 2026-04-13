@@ -6,7 +6,8 @@ import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
-import '../../../../core/utils/file_utils.dart'; // Added
+import '../../../../core/utils/file_utils.dart';
+import '../../../../core/services/storage_service.dart';
 
 class TripCreateEditScreen extends StatefulWidget {
   final String? tripId;
@@ -35,7 +36,7 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
       );
       if (match.isEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) context.go('/home');
+          if (mounted) context.go('/');
         });
         return;
       }
@@ -176,10 +177,19 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
 
       String? finalPhotoPath = _coverPhotoUrl;
       if (_coverPhotoUrl != null && !_coverPhotoUrl!.startsWith('http')) {
-        finalPhotoPath = await FileUtils.saveFilePersistently(_coverPhotoUrl!);
+        // Show uploading hint
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('☁️ Syncing cover photo to cloud...'), duration: Duration(seconds: 2)),
+        );
+
+        final localSaved = await FileUtils.saveFilePersistently(_coverPhotoUrl!);
+        final String? cloudUrl = await StorageService.uploadImage(localSaved, 'trip_covers');
+        finalPhotoPath = cloudUrl ?? localSaved; // Preferred cloud, fallback local
       }
 
       if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
       final TripModel newTrip;
       if (widget.tripId != null) {
@@ -220,7 +230,13 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
       }
       await store.saveToDisk();
 
-      if (mounted) context.pop();
+      if (mounted) {
+        if (Navigator.of(context).canPop()) {
+           Navigator.of(context).pop();
+        } else {
+           context.go('/');
+        }
+      }
     } else if (_startDate == null || _endDate == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -121,18 +121,18 @@ class TripModel {
       destination: json['destination']?.toString() ?? 'Unknown',
       startDate: DateTime.tryParse(json['startDate']?.toString() ?? '') ?? DateTime.now(),
       endDate: DateTime.tryParse(json['endDate']?.toString() ?? '') ?? DateTime.now(),
-      totalBudget: (json['totalBudget'] as num?)?.toDouble() ?? 0.0,
+      totalBudget: double.tryParse(json['totalBudget']?.toString() ?? '') ?? 0.0,
       currency: json['currency']?.toString() ?? r'$',
       coverPhoto: json['coverPhoto']?.toString(),
-      itinerary: (json['itinerary'] as List<dynamic>?)?.map((d) => DayData.fromJson(d)).toList(),
-      expenses: (json['expenses'] as List<dynamic>?)?.map((e) => ExpenseModel.fromJson(e)).toList(),
-      photos: (json['photos'] as List<dynamic>?)?.map((p) => PhotoModel.fromJson(p)).toList(),
+      itinerary: (json['itinerary'] as List<dynamic>?)?.map((d) => DayData.fromJson(d as Map<String, dynamic>)).toList(),
+      expenses: (json['expenses'] as List<dynamic>?)?.map((e) => ExpenseModel.fromJson(e as Map<String, dynamic>)).toList(),
+      photos: (json['photos'] as List<dynamic>?)?.map((p) => PhotoModel.fromJson(p as Map<String, dynamic>)).toList(),
     );
 
     if (markerCoords != null) {
       trip.markers = markerCoords.map((c) {
         return Marker(
-          point: ll.LatLng(c['lat']!, c['lng']!),
+          point: ll.LatLng((c['lat'] as num?)?.toDouble() ?? 0.0, (c['lng'] as num?)?.toDouble() ?? 0.0),
           child: const Icon(Icons.location_on, color: Color(0xFFD97706), size: 30),
         );
       }).toList();
@@ -145,6 +145,11 @@ class DayData {
   final DateTime date;
   final List<PlaceData> places;
   DayData({required this.date, List<PlaceData>? places}) : places = places ?? [];
+
+  DayData copyWith({DateTime? date, List<PlaceData>? places}) => DayData(
+    date: date ?? this.date,
+    places: places ?? this.places,
+  );
 
   Map<String, dynamic> toJson() => {
     'date': date.toIso8601String(),
@@ -163,6 +168,13 @@ class PlaceData {
   final String type;
   final String? notes;
   PlaceData({required this.name, required this.time, required this.type, this.notes});
+
+  PlaceData copyWith({String? name, String? time, String? type, String? notes}) => PlaceData(
+    name: name ?? this.name,
+    time: time ?? this.time,
+    type: type ?? this.type,
+    notes: notes ?? this.notes,
+  );
 
   Map<String, dynamic> toJson() => {'name': name, 'time': time, 'type': type, 'notes': notes};
 
@@ -184,6 +196,16 @@ class PlaceModel {
   final String? notes;
 
   PlaceModel({required this.id, required this.tripId, required this.name, required this.category, required this.date, required this.time, this.notes});
+
+  PlaceModel copyWith({String? name, String? category, DateTime? date, String? time, String? notes}) => PlaceModel(
+    id: id,
+    tripId: tripId,
+    name: name ?? this.name,
+    category: category ?? this.category,
+    date: date ?? this.date,
+    time: time ?? this.time,
+    notes: notes ?? this.notes,
+  );
 
   Map<String, dynamic> toJson() => {
     'id': id, 'tripId': tripId, 'name': name, 'category': category, 'date': date.toIso8601String(), 'time': time, 'notes': notes,
@@ -211,18 +233,28 @@ class ExpenseModel {
 
   ExpenseModel({required this.id, required this.tripId, required this.name, required this.amount, required this.category, required this.date, this.note});
 
+  ExpenseModel copyWith({String? name, double? amount, String? category, DateTime? date, String? note}) => ExpenseModel(
+    id: id,
+    tripId: tripId,
+    name: name ?? this.name,
+    amount: amount ?? this.amount,
+    category: category ?? this.category,
+    date: date ?? this.date,
+    note: note ?? this.note,
+  );
+
   Map<String, dynamic> toJson() => {
     'id': id, 'tripId': tripId, 'name': name, 'amount': amount, 'category': category, 'date': date.toIso8601String(), 'note': note,
   };
 
   factory ExpenseModel.fromJson(Map<String, dynamic> json) => ExpenseModel(
-    id: json['id'] ?? DateTime.now().toString(),
-    tripId: json['tripId'] ?? '',
-    name: json['name'] ?? 'Expense',
-    amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-    category: json['category'] ?? 'General',
-    date: DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(),
-    note: json['note'],
+    id: json['id']?.toString() ?? DateTime.now().toString(),
+    tripId: json['tripId']?.toString() ?? '',
+    name: json['name']?.toString() ?? 'Expense',
+    amount: double.tryParse(json['amount']?.toString() ?? '') ?? 0.0,
+    category: json['category']?.toString() ?? 'General',
+    date: DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
+    note: json['note']?.toString(),
   );
 }
 
@@ -427,6 +459,14 @@ class InMemoryStore extends ChangeNotifier {
   Future<void> loadFromDisk() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+
+      // Ensure settings are loaded FIRST so Dark Mode persists on restart.
+      final settingsJson = prefs.getString(_settingsKey);
+      if (settingsJson != null) {
+        settings = AppSettings.fromJson(jsonDecode(settingsJson));
+        currentCurrency = settings.currency;
+      }
+
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         final userDocRef = _firestore.collection('users').doc(user.uid);
@@ -469,15 +509,11 @@ class InMemoryStore extends ChangeNotifier {
         final List<dynamic> decoded = jsonDecode(photosJson);
         photos = decoded.map((p) => PhotoModel.fromJson(p)).toList();
       }
-      final settingsJson = prefs.getString(_settingsKey);
-      if (settingsJson != null) {
-        settings = AppSettings.fromJson(jsonDecode(settingsJson));
-        currentCurrency = settings.currency;
-      }
       final userJson = prefs.getString(_userKey);
       if (userJson != null) {
         currentUser = UserModel.fromJson(jsonDecode(userJson));
       }
+
     } catch (e) {
       debugPrint('[Wandr] Load error: $e');
       trips = [...dummyTrips];

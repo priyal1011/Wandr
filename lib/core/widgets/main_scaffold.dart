@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 import 'package:gap/gap.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'pincushion_distortion.dart';
 
 class MainScaffold extends StatefulWidget {
   final Widget child;
@@ -16,8 +14,8 @@ class MainScaffold extends StatefulWidget {
 class _MainScaffoldState extends State<MainScaffold> {
   int _getSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.path;
-    if (location.startsWith('/home')) return 0;
-    if (location.startsWith('/trip/create')) return 1;
+    if (location == '/') return 0;
+    if (location.startsWith('/create-trip')) return 1;
     if (location.startsWith('/memories')) return 2;
     if (location.startsWith('/settings')) return 3;
     return 0;
@@ -26,10 +24,10 @@ class _MainScaffoldState extends State<MainScaffold> {
   void _onItemTapped(int index, BuildContext context) {
     switch (index) {
       case 0:
-        context.go('/home');
+        context.go('/');
         break;
       case 1:
-        context.push('/trip/create');
+        context.push('/create-trip');
         break;
       case 2:
         context.go('/memories');
@@ -44,30 +42,16 @@ class _MainScaffoldState extends State<MainScaffold> {
   Widget build(BuildContext context) {
     final selectedIndex = _getSelectedIndex(context);
 
-    // Apply shader animation only when entering the Memories tab (index 2)
-    return Animate(
-      effects: [
-        if (selectedIndex == 2)
-          CustomEffect(
-            begin: 1.5, // High distortion
-            end: 0.0, // Crystal clear
-            duration: 800.ms,
-            curve: Curves.easeOutQuart,
-            builder: (context, value, child) =>
-                PincushionDistortion(distortionAmount: value, child: child),
-          ),
-      ],
-      child: ScreenTypeLayout.builder(
-        mobile: (context) => _MobileScaffold(
-          selectedIndex: selectedIndex,
-          onItemTapped: (index) => _onItemTapped(index, context),
-          child: widget.child,
-        ),
-        tablet: (context) => _DesktopScaffold(
-          selectedIndex: selectedIndex,
-          onItemTapped: (index) => _onItemTapped(index, context),
-          child: widget.child,
-        ),
+    return ScreenTypeLayout.builder(
+      mobile: (context) => _MobileScaffold(
+        selectedIndex: selectedIndex,
+        onItemTapped: (index) => _onItemTapped(index, context),
+        child: widget.child,
+      ),
+      tablet: (context) => _DesktopScaffold(
+        selectedIndex: selectedIndex,
+        onItemTapped: (index) => _onItemTapped(index, context),
+        child: widget.child,
       ),
     );
   }

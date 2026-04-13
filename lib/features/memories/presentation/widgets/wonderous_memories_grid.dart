@@ -21,11 +21,8 @@ class _WonderousMemoriesGridState extends State<WonderousMemoriesGrid>
   late AnimationController _controller;
   int _currentIndex = 0;
   Offset _panOffset = Offset.zero;
-  // Columns: Set how many items fit across the screen horizontally.
   final int _crossAxisCount = 3; 
 
-  // Rows: Calculated automatically! (Total Items / Columns)
-  // To see more rows at once, decrease the _itemHeight below.
   final double _itemWidth = 280;
   final double _itemHeight = 420;
   final double _spacing = 15;
@@ -140,18 +137,14 @@ class _WonderousMemoriesGridState extends State<WonderousMemoriesGrid>
           onPanUpdate: _handlePanUpdate,
           onPanEnd: (d) => _handlePanEnd(d, screenSize),
           onTap: () {
-            // General tap - navigates to the central image
             HapticFeedback.lightImpact();
             context.push('/memory/${widget.photos[_currentIndex].id}');
           },
-          behavior: HitTestBehavior.translucent, // Let taps reach the children
+          behavior: HitTestBehavior.translucent,
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // 1. The Core Animation
               Transform.translate(offset: currentOffset, child: _buildGrid()),
-
-              // 2. The Highlight Overlay
               IgnorePointer(
                 child: _AnimatedCutoutOverlay(
                   targetWidth: _itemWidth * 1.1,
@@ -192,53 +185,32 @@ class _WonderousMemoriesGridState extends State<WonderousMemoriesGrid>
                 duration: const Duration(milliseconds: 600),
                 curve: Curves.easeOutQuart,
                 builder: (context, selectionValue, child) {
-                  final double scale =
-                      0.9 + (selectionValue * 0.15); // Expand when selected
+                  final double scale = 0.9 + (selectionValue * 0.15); 
 
                   return Transform(
                     transform: Matrix4.diagonal3Values(scale, scale, 1.0)
-                      ..setEntry(3, 2, 0.001) // Perspective
-                      ..rotateX(
-                        isSelected ? 0 : 0.1,
-                      ) // Tilt back if not selected
-                      ..rotateY(
-                        isSelected
-                            ? 0
-                            : (col < 1
-                                  ? 0.2
-                                  : col > 1
-                                  ? -0.2
-                                  : 0),
-                      ),
+                      ..setEntry(3, 2, 0.001) 
+                      ..rotateX(isSelected ? 0 : 0.1) 
+                      ..rotateY(isSelected ? 0 : (col < 1 ? 0.2 : col > 1 ? -0.2 : 0)),
                     alignment: Alignment.center,
-                    child:
-                        GestureDetector(
-                              onTap: () {
-                                _currentIndex = index;
-                                HapticFeedback.lightImpact();
-                                setState(() {});
-                                // Add a slight delay for the centering animation before pushing
-                                Future.delayed(
-                                  const Duration(milliseconds: 100),
-                                  () {
-                                    if (context.mounted) {
-                                      context.push('/memory/${photo.id}');
-                                    }
-                                  },
-                                );
-                              },
-                              child: _PhotoCard(
-                                photo: photo,
-                                isSelected: isSelected,
-                              ),
-                            )
-                            .animate(delay: Duration(milliseconds: index * 50))
-                            .fadeIn(duration: 800.ms, curve: Curves.easeOut)
-                            .slideY(
-                              begin: 0.2,
-                              end: 0,
-                              curve: Curves.easeOutBack,
-                            ),
+                    child: GestureDetector(
+                      onTap: () {
+                        if (isSelected) {
+                          HapticFeedback.lightImpact();
+                          context.push('/memory/${photo.id}');
+                        } else {
+                          _currentIndex = index;
+                          HapticFeedback.lightImpact();
+                          setState(() {});
+                        }
+                      },
+                      child: _PhotoCard(
+                        photo: photo,
+                        isSelected: isSelected,
+                      ),
+                    ).animate(delay: Duration(milliseconds: index * 50))
+                     .fadeIn(duration: 800.ms, curve: Curves.easeOut)
+                     .slideY(begin: 0.2, end: 0, curve: Curves.easeOutBack),
                   );
                 },
               ),
@@ -267,9 +239,7 @@ class _PhotoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(
-              context,
-            ).colorScheme.primary.withValues(alpha: isSelected ? 0.3 : 0.1),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: isSelected ? 0.3 : 0.1),
             blurRadius: isSelected ? 40 : 15,
             offset: Offset(0, isSelected ? 20 : 8),
             spreadRadius: isSelected ? -5 : 0,
@@ -282,30 +252,53 @@ class _PhotoCard extends StatelessWidget {
             tag: 'memory_photo_${photo.id}',
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),
-              child: photo.url.startsWith('http')
-                  ? Image.network(
-                      photo.url,
+              child: Builder(
+                builder: (context) {
+                  final String fallback = 'https://images.unsplash.com/photo-${1501785888041 + (photo.id.hashCode % 10000)}?q=80&w=800&auto=format&fit=crop';
+                  
+                  Widget netImg(String url, {bool isFallback = false}) => Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        url,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (c, e, s) => Image.network(
+                          'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1000&auto=format&fit=crop',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      if (isFallback)
+                        Container(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          child: const Center(
+                            child: Icon(Icons.cloud_sync_outlined, color: Colors.white54, size: 30),
+                          ),
+                        ),
+                    ],
+                  );
+
+                  if (photo.url.startsWith('http')) {
+                    return netImg(photo.url);
+                  }
+                  
+                  final file = File(photo.url);
+                  if (file.existsSync()) {
+                    return Image.file(
+                      file,
                       width: double.infinity,
                       height: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (c, e, s) => Container(
-                        color: Colors.grey.shade300,
-                        child: const Icon(Icons.broken_image),
-                      ),
-                    )
-                  : Image.file(
-                      File(photo.url),
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (c, e, s) => Container(
-                        color: Colors.grey.shade300,
-                        child: const Icon(Icons.broken_image),
-                      ),
-                    ),
+                      errorBuilder: (c, e, s) => netImg(fallback, isFallback: true),
+                    );
+                  } else {
+                    return netImg(fallback, isFallback: true);
+                  }
+                },
+              ),
             ),
           ),
-          // Gradient Bottom Overlay for Typography
           Positioned(
             bottom: 0,
             left: 0,
@@ -313,14 +306,9 @@ class _PhotoCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(24),
-                ),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
                 gradient: LinearGradient(
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.8),
-                  ],
+                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -332,14 +320,10 @@ class _PhotoCard extends StatelessWidget {
                   if (matchedTrip != null)
                     Row(
                       children: [
-                        Icon(
-                          Icons.location_on,
-                          size: 10,
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
+                        Icon(Icons.location_on, size: 10, color: Theme.of(context).colorScheme.secondary),
                         const Gap(4),
                         Text(
-                          matchedTrip.destination.toUpperCase(),
+                          matchedTrip.name.toUpperCase(),
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.secondary,
                             fontSize: 9,
@@ -354,26 +338,18 @@ class _PhotoCard extends StatelessWidget {
                     photo.caption ?? "Journey Moment",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
             ),
           ),
-          // Glossy Border if selected
           if (isSelected)
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3),
-                    width: 1.5,
-                  ),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
                 ),
               ),
             ),
@@ -386,22 +362,13 @@ class _PhotoCard extends StatelessWidget {
 class _AnimatedCutoutOverlay extends StatelessWidget {
   final double targetWidth;
   final double targetHeight;
-
-  const _AnimatedCutoutOverlay({
-    required this.targetWidth,
-    required this.targetHeight,
-  });
+  const _AnimatedCutoutOverlay({required this.targetWidth, required this.targetHeight});
 
   @override
   Widget build(BuildContext context) {
     return ClipPath(
-      clipper: _CutoutClipper(
-        targetWidth: targetWidth,
-        targetHeight: targetHeight,
-      ),
-      child: Container(
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-      ),
+      clipper: _CutoutClipper(targetWidth: targetWidth, targetHeight: targetHeight),
+      child: Container(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
     );
   }
 }
@@ -409,28 +376,16 @@ class _AnimatedCutoutOverlay extends StatelessWidget {
 class _CutoutClipper extends CustomClipper<Path> {
   final double targetWidth;
   final double targetHeight;
-
   _CutoutClipper({required this.targetWidth, required this.targetHeight});
 
   @override
   Path getClip(Size size) {
     final path = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
-
-    final cutoutRect = Rect.fromCenter(
-      center: Offset(size.width / 2, size.height / 2),
-      width: targetWidth,
-      height: targetHeight,
-    );
-
-    path.addRRect(
-      RRect.fromRectAndRadius(cutoutRect, const Radius.circular(30)),
-    );
+    final cutoutRect = Rect.fromCenter(center: Offset(size.width / 2, size.height / 2), width: targetWidth, height: targetHeight);
+    path.addRRect(RRect.fromRectAndRadius(cutoutRect, const Radius.circular(30)));
     path.fillType = PathFillType.evenOdd;
     return path;
   }
-
   @override
-  bool shouldReclip(_CutoutClipper oldClipper) =>
-      oldClipper.targetWidth != targetWidth ||
-      oldClipper.targetHeight != targetHeight;
+  bool shouldReclip(_CutoutClipper oldClipper) => oldClipper.targetWidth != targetWidth || oldClipper.targetHeight != targetHeight;
 }

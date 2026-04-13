@@ -40,18 +40,19 @@ class _LoginScreenState extends State<LoginScreen> {
           final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
           
           if (doc.exists) {
+            final data = doc.data();
             getIt<InMemoryStore>().currentUser = UserModel(
               id: user.uid,
-              name: doc['name'],
-              email: doc['email'],
+              name: data?['name']?.toString() ?? 'Explorer',
+              email: data?['email']?.toString() ?? user.email ?? 'traveler@wandr.com',
               password: '', // Password handled by Firebase Auth
-              photoUrl: doc.data()!.containsKey('photoUrl') ? doc['photoUrl'] : null,
+              photoUrl: data?['photoUrl']?.toString(),
             );
           } else {
              getIt<InMemoryStore>().currentUser = UserModel(
               id: user.uid,
               name: 'Explorer',
-              email: user.email!,
+              email: user.email ?? 'traveler@wandr.com',
               password: '', // Password handled by Firebase Auth
             );
           }
@@ -74,6 +75,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       extendBody: true,
@@ -93,17 +96,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Gap(40),
                   // Logo with a premium blending glow
                   Container(
-                    width: 100,
-                    height: 100,
+                    width: 180,
+                    height: 180,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      // boxShadow: [
-                      //   BoxShadow(
-                      //     color: Colors.white.withValues(alpha: 0.1),
-                      //     blurRadius: 30,
-                      //     spreadRadius: 10,
-                      //   ),
-                      // ],
                       gradient: RadialGradient(
                         colors: [
                           Colors.white.withValues(alpha: 0.15),
@@ -114,9 +110,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Center(
                       child: ClipOval(
                         child: Image.asset(
-                          'assets/images/logo.png',
-                          width: 80,
-                          height: 80,
+                          isDark ? 'assets/images/logo_dark.png' : 'assets/images/logo.png',
+                          width: 140,
+                          height: 140,
                           fit: BoxFit.cover,
                         ),
                       ),

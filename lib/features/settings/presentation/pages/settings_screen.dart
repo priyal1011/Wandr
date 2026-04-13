@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fluttermoji/fluttermoji.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
 import '../../../../theme/app_theme.dart';
@@ -159,9 +158,10 @@ class _ProfileSection extends StatelessWidget {
       );
     }
     
-    return FluttermojiCircleAvatar(
+    return CircleAvatar(
       radius: 35,
-      backgroundColor: Colors.white24,
+      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+      child: Icon(Icons.person, color: Theme.of(context).colorScheme.primary, size: 40),
     );
   }
 

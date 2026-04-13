@@ -9,6 +9,7 @@ import '../../../../main.dart';
 import '../../../../core/widgets/interactive_dialog.dart';
 import '../../../../core/utils/file_utils.dart'; // Added
 import '../../../../core/utils/haptic_feedback_helper.dart';
+import '../../../../core/services/storage_service.dart';
 
 import '../widgets/wonderous_memories_grid.dart';
 
@@ -128,7 +129,14 @@ class _MemoriesScreenState extends State<MemoriesScreen> {
             TextButton(onPressed: () => context.pop(), child: const Text('Cancel')),
             ElevatedButton(
               onPressed: (pickedFilePath == null) ? null : () async {
+                // Show uploading hint
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('☁️ Syncing memory to cloud...'), duration: Duration(seconds: 2)),
+                );
+
                 final finalPath = await FileUtils.saveFilePersistently(pickedFilePath!);
+                final String? cloudUrl = await StorageService.uploadImage(finalPath, 'memories');
                 
                 final inputTripName = tripNameCtrl.text.trim();
                 final tripMatch = store.trips.where(
@@ -140,7 +148,7 @@ class _MemoriesScreenState extends State<MemoriesScreen> {
                 final newPhoto = PhotoModel(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   tripId: matchedTrip?.id,
-                  url: finalPath,
+                  url: cloudUrl ?? finalPath,
                   caption: captionCtrl.text.isEmpty ? null : captionCtrl.text,
                 );
 
@@ -157,6 +165,7 @@ class _MemoriesScreenState extends State<MemoriesScreen> {
                 store.saveToDisk();
                 HapticHelper.success();
                 if (context.mounted) {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
                   context.pop();
                 }
               },
