@@ -51,6 +51,7 @@ class _SignupScreenState extends State<SignupScreen> {
             password: '', 
           );
           getIt<InMemoryStore>().hasSeenOnboarding = true;
+          await getIt<InMemoryStore>().loadFromDisk();
 
           if (mounted) context.go('/home');
         }
@@ -89,6 +90,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget build(BuildContext context) {
     // Ensure the system bars don't interfere with the design
     return Scaffold(
+      extendBody: true,
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [

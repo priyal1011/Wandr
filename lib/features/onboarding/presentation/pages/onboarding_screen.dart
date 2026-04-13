@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:gap/gap.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart' as spi;
@@ -44,7 +46,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final bool isLastPage = _currentIndex == _slides.length - 1;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBody: true,
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           // Background PageView
@@ -85,7 +89,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Spacer(),
+                  const Spacer(flex: 3),
                   Animate(
                     key: ValueKey(_currentIndex),
                     effects: const [FadeEffect(duration: Duration(milliseconds: 600)), SlideEffect(begin: Offset(0, 0.05))],
@@ -94,25 +98,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       children: [
                         Text(
                           _slides[_currentIndex].title,
-                          style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                          style: GoogleFonts.plusJakartaSans(
                             color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 40,
+                            fontWeight: FontWeight.w800,
                             letterSpacing: -1,
+                            height: 1.1,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const Gap(16),
                         Text(
                           _slides[_currentIndex].subtitle,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            height: 1.5,
-                            fontSize: 18,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontWeight: FontWeight.w500,
+                            height: 1.6,
+                            fontSize: 16,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 64),
+                  const Gap(48),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
