@@ -8,6 +8,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:fluttermoji/fluttermoji.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import '../../../../models/trip_model.dart';
+import '../../../../models/user_model.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 

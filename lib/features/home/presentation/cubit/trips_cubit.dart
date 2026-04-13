@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
 import 'package:equatable/equatable.dart';
+import '../../../../models/trip_model.dart';
 
 abstract class TripsState extends Equatable {
   @override

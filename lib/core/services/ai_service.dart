@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import '../in_memory_store.dart';
+import '../../models/day_data.dart';
+import '../../models/place_data.dart';
 
 class AiService {
-  static const String _apiKey = 'AIzaSyAGKBDfoQt8pfCzxFMwFOJyPfw3DqpR1g8';
+  static String get _apiKey => dotenv.get('GEMINI_API_KEY', fallback: '');
 
   static Future<List<DayData>?> generateItinerary({
     required String destination,
@@ -12,8 +14,9 @@ class AiService {
     required DateTime startDate,
     String customPrompt = '',
     String predefinedKey = '',
+    http.Client? client,
   }) async {
-    return _callGemini(_getPrompt(destination, days, startDate, customPrompt));
+    return _callGemini(_getPrompt(destination, days, startDate, customPrompt), client: client);
   }
 
   /// NEW FEATURE: Add more activities to an existing day!
@@ -40,13 +43,14 @@ Return ONLY raw JSON in this structure:
     return null;
   }
 
-  static Future<List<DayData>?> _callGemini(String prompt) async {
+  static Future<List<DayData>?> _callGemini(String prompt, {http.Client? client}) async {
+    final httpClient = client ?? http.Client();
     try {
       debugPrint('[Wandr AI] Sending Request to Gemini...');
       const String modelName = 'gemini-3.1-flash-lite-preview';
       final url = 'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent';
       
-      final response = await http.post(
+      final response = await httpClient.post(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',

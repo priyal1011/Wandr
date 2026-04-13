@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import '../../../../models/trip_model.dart';
 
 class TripsListScreen extends StatelessWidget {
   final bool isUpcoming;

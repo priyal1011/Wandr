@@ -5,9 +5,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/in_memory_store.dart';
 import 'core/routing/app_router.dart';
 import 'theme/app_theme.dart';
+import 'features/auth/presentation/cubit/auth_cubit.dart';
+import 'models/user_model.dart';
 
 final getIt = GetIt.instance;
 
@@ -20,6 +24,10 @@ Future<void> setup() async {
   
   final store = InMemoryStore();
   getIt.registerSingleton<InMemoryStore>(store);
+  
+  // Register AuthCubit
+  getIt.registerSingleton<AuthCubit>(AuthCubit());
+  
   await store.loadFromDisk();
 
   try {
@@ -41,6 +49,8 @@ Future<void> setup() async {
             photoUrl: doc.data()!.containsKey('photoUrl') ? doc['photoUrl'] : null,
           );
           store.hasSeenOnboarding = true;
+          // Notify AuthCubit of success
+          getIt<AuthCubit>().setAuthenticated();
         }
       }
     }
@@ -51,6 +61,7 @@ Future<void> setup() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   
   // Immersive Edge-to-Edge System UI Strategy
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -91,13 +102,18 @@ class WandrAppState extends State<WandrApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Wandr',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: _themeMode,
-      routerConfig: appRouter,
-      debugShowCheckedModeBanner: false,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthCubit>.value(value: getIt<AuthCubit>()),
+      ],
+      child: MaterialApp.router(
+        title: 'Wandr',
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: _themeMode,
+        routerConfig: appRouter,
+        debugShowCheckedModeBanner: false,
+      ),
     );
   }
 }

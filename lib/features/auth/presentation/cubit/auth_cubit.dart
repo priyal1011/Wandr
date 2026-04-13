@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../models/user_model.dart';
 
 abstract class AuthState {}
 
@@ -36,9 +38,14 @@ class AuthCubit extends Cubit<AuthState> {
     emit(AuthSuccess());
   }
 
-  void logout() {
+  void setAuthenticated() {
+    emit(AuthSuccess());
+  }
+
+  Future<void> logout() async {
     final store = getIt<InMemoryStore>();
-    store.currentUser = null;
+    await FirebaseAuth.instance.signOut();
+    await store.resetData();
     emit(AuthInitial());
   }
 }

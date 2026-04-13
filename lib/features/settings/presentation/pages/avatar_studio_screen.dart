@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import '../../../../models/user_model.dart';
 
 class AvatarStudioScreen extends StatefulWidget {
   const AvatarStudioScreen({super.key});

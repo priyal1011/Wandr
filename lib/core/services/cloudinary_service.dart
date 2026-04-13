@@ -2,11 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CloudinaryService {
-  static const String _cloudName = 'dheyl1zx0';
-  static const String _apiKey = '442429413472425';
-  static const String _uploadPreset = 'wandr_unsigned';
+  static String get _cloudName => dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? '';
+  static String get _apiKey => dotenv.env['CLOUDINARY_API_KEY'] ?? '';
+  static String get _uploadPreset => dotenv.env['CLOUDINARY_UPLOAD_PRESET'] ?? '';
 
   /// Uploads a local file to Cloudinary and returns the public URL.
   static Future<String?> uploadImage(String localPath) async {

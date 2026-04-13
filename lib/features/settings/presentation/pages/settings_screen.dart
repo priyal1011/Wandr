@@ -2,10 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import '../../../../models/user_model.dart';
+import '../../../../models/app_settings.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -117,11 +120,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const Gap(32),
           ElevatedButton.icon(
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              await store.resetData();
-              if (context.mounted) context.go('/');
-            },
+            onPressed: () => context.read<AuthCubit>().logout(),
             icon: const Icon(Icons.logout, color: Colors.red),
             label: const Text('Logout', style: TextStyle(color: Colors.red)),
             style: ElevatedButton.styleFrom(

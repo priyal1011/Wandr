@@ -15,7 +15,11 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) context.go('/');
+      if (mounted) {
+        // Just go to root, the Reactive Router will handle the redirection
+        // based on AuthState and onboarding status.
+        context.go('/');
+      }
     });
   }
 

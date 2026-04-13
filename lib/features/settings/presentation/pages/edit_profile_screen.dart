@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:fluttermoji/fluttermoji.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import '../../../../models/user_model.dart';
 import '../../../../theme/app_theme.dart';
 
 class EditProfileScreen extends StatefulWidget {

@@ -2,9 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
-import 'package:intl/intl.dart';
-import 'package:wandr/core/in_memory_store.dart';
 import 'package:wandr/core/widgets/interactive_dialog.dart';
+import 'package:wandr/models/trip_model.dart';
+import 'package:wandr/models/expense_model.dart';
+import 'expense_card.dart';
+import 'group_splits_view.dart';
 
 class ExpensesView extends StatefulWidget {
   final TripModel trip;
@@ -57,7 +59,7 @@ class ExpensesViewState extends State<ExpensesView> {
                   labelText: 'What did you buy?',
                   labelStyle: const TextStyle(color: Colors.grey),
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+                  fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                 ),
               ),
@@ -74,7 +76,7 @@ class ExpensesViewState extends State<ExpensesView> {
                         labelText: 'Amount (${widget.trip.currency})',
                         labelStyle: const TextStyle(color: Colors.grey),
                         filled: true,
-                        fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+                        fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                       ),
                     ),
@@ -90,7 +92,7 @@ class ExpensesViewState extends State<ExpensesView> {
                         labelText: 'Category',
                         labelStyle: const TextStyle(color: Colors.grey),
                         filled: true,
-                        fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+                        fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                       ),
                       items: ['Food', 'Transport', 'Stay', 'Shopping', 'Other']
@@ -119,7 +121,7 @@ class ExpensesViewState extends State<ExpensesView> {
                     decoration: InputDecoration(
                       labelText: 'Who Paid?',
                       filled: true,
-                      fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+                      fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                     ),
                     items: participants.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
@@ -132,14 +134,13 @@ class ExpensesViewState extends State<ExpensesView> {
                   ),
                   const Gap(8),
                   Container(
-                    constraints: const BoxConstraints(maxHeight: 120),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: ListView(
                       shrinkWrap: true,
-                      physics: const ClampingScrollPhysics(),
+                      physics: const NeverScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       children: participants.map((p) {
                         return CheckboxListTile(
@@ -221,7 +222,7 @@ class ExpensesViewState extends State<ExpensesView> {
                 decoration: InputDecoration(
                   labelText: 'What did you buy?',
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+                  fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                 ),
               ),
@@ -237,7 +238,7 @@ class ExpensesViewState extends State<ExpensesView> {
                       decoration: InputDecoration(
                         labelText: 'Amount (${widget.trip.currency})',
                         filled: true,
-                        fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+                        fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                       ),
                     ),
@@ -252,7 +253,7 @@ class ExpensesViewState extends State<ExpensesView> {
                       decoration: InputDecoration(
                         labelText: 'Category',
                         filled: true,
-                        fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+                        fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                       ),
                       items: ['Food', 'Transport', 'Stay', 'Shopping', 'Other']
@@ -280,7 +281,7 @@ class ExpensesViewState extends State<ExpensesView> {
                     decoration: InputDecoration(
                       labelText: 'Who Paid?',
                       filled: true,
-                      fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+                      fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                     ),
                     items: participants.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
@@ -288,14 +289,13 @@ class ExpensesViewState extends State<ExpensesView> {
                   ),
                   const Gap(12),
                   Container(
-                    constraints: const BoxConstraints(maxHeight: 120),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: ListView(
                       shrinkWrap: true,
-                      physics: const ClampingScrollPhysics(),
+                      physics: const NeverScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       children: participants.map((p) {
                         return CheckboxListTile(
@@ -427,7 +427,7 @@ class ExpensesViewState extends State<ExpensesView> {
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -443,7 +443,7 @@ class ExpensesViewState extends State<ExpensesView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(_viewMode == 'Ledger' ? 'Expenses' : 'Settlements', 
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 18, fontWeight: FontWeight.bold)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 18, fontWeight: FontWeight.bold)),
                   if (_viewMode == 'Ledger')
                     TextButton.icon(
                       onPressed: showAddExpense, 
@@ -459,7 +459,11 @@ class ExpensesViewState extends State<ExpensesView> {
         Expanded(
           child: _viewMode == 'Ledger' 
             ? (_expenses.isEmpty ? _buildEmptyState() : _buildExpensesList())
-            : _buildSplitsView(),
+            : GroupSplitsView(
+                balances: _calculateBalances(),
+                settlements: _calculateSettlements(_calculateBalances()),
+                currency: widget.trip.currency,
+              ),
         ),
       ],
     );
@@ -475,7 +479,7 @@ class ExpensesViewState extends State<ExpensesView> {
           decoration: BoxDecoration(
             color: isSelected ? Theme.of(context).colorScheme.surface : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)] : [],
+            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)] : [],
           ),
           child: Text(
             mode == 'Ledger' ? 'My Ledger' : 'Group Splits',
@@ -497,89 +501,17 @@ class ExpensesViewState extends State<ExpensesView> {
       itemCount: _expenses.length,
       itemBuilder: (context, index) {
         final expense = _expenses[index];
-        return _buildExpenseCard(expense, index);
+        return ExpenseCard(
+          expense: expense,
+          index: index,
+          currency: widget.trip.currency,
+          onEdit: () => _editExpense(index),
+          onDelete: () => _deleteExpense(index),
+        );
       },
     );
   }
 
-  Widget _buildSplitsView() {
-    final balances = _calculateBalances();
-    final settlements = _calculateSettlements(balances);
-
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 160),
-      children: [
-        Text('BALANCES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary, letterSpacing: 1)),
-        const Gap(12),
-        ...balances.entries.map((e) => Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(e.key, style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text(
-                '${e.value >= 0 ? '+' : ''}${widget.trip.currency}${e.value.toStringAsFixed(0)}',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900, 
-                  color: e.value >= 0 ? Colors.greenAccent : Colors.redAccent,
-                ),
-              ),
-            ],
-          ),
-        )),
-        const Gap(24),
-        Text('SUGGESTED SETTLEMENTS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary, letterSpacing: 1)),
-        const Gap(12),
-        if (settlements.isEmpty)
-          Center(child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Text('All settled up! 🎉', style: TextStyle(color: Colors.grey.withOpacity(0.5))),
-          ))
-        else
-          ...settlements.map((s) => Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.lightBlueAccent.withOpacity(0.05), Colors.lightBlueAccent.withOpacity(0.02)],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.lightBlueAccent.withOpacity(0.1)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(s['from'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      const Text('should pay', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.arrow_forward, color: Colors.lightBlueAccent, size: 20),
-                const Gap(8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(s['to'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      Text('${widget.trip.currency}${s['amount'].toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.lightBlueAccent)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          )),
-      ],
-    ).animate().fadeIn();
-  }
 
   Widget _buildBudgetCard() {
     final remaining = widget.trip.totalBudget - _totalSpent;
@@ -599,7 +531,7 @@ class ExpensesViewState extends State<ExpensesView> {
             offset: const Offset(0, 10),
           ),
         ],
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,7 +562,7 @@ class ExpensesViewState extends State<ExpensesView> {
             child: LinearProgressIndicator(
               value: percent,
               minHeight: 10,
-              backgroundColor: Theme.of(context).dividerColor.withOpacity(0.05),
+              backgroundColor: Theme.of(context).dividerColor.withValues(alpha: 0.05),
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.lightBlueAccent),
             ),
           ),
@@ -681,82 +613,4 @@ class ExpensesViewState extends State<ExpensesView> {
     );
   }
 
-  Widget _buildExpenseCard(ExpenseModel expense, int index) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
-        boxShadow: !isDark ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))] : [],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.lightBlueAccent.withOpacity(0.05),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(_getCategoryIcon(expense.category), color: Colors.lightBlueAccent, size: 20),
-          ),
-          const Gap(16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(expense.name, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
-                Row(
-                  children: [
-                    Text(DateFormat('MMM dd').format(expense.date), style: TextStyle(color: Colors.grey, fontSize: 12)),
-                    if (expense.splitWith != null && expense.splitWith!.length > 1) ...[
-                      Text(' • ', style: TextStyle(color: Colors.grey.withOpacity(0.5), fontSize: 12)),
-                      Icon(Icons.group_outlined, size: 12, color: Colors.lightBlueAccent.withOpacity(0.7)),
-                      const Gap(4),
-                      Text('Split with ${expense.splitWith!.length}', style: TextStyle(color: Colors.lightBlueAccent.withOpacity(0.7), fontSize: 11, fontWeight: FontWeight.bold)),
-                    ],
-                  ],
-                ),
-                if (expense.paidBy != null && expense.paidBy != 'Me') ...[
-                  const Gap(2),
-                  Text('Paid by ${expense.paidBy}', style: TextStyle(color: Colors.grey.withOpacity(0.6), fontSize: 10, fontStyle: FontStyle.italic)),
-                ],
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('${widget.trip.currency}${expense.amount.toStringAsFixed(0)}',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w900, fontSize: 18)),
-              PopupMenuButton<String>(
-                icon: Icon(Icons.more_horiz, size: 18, color: Colors.grey.withOpacity(0.5)),
-                padding: EdgeInsets.zero,
-                onSelected: (val) {
-                  if (val == 'edit') _editExpense(index);
-                  if (val == 'delete') _deleteExpense(index);
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit_outlined, size: 18), Gap(8), Text('Edit')])),
-                  const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_outline, color: Colors.red, size: 18), Gap(8), Text('Delete', style: TextStyle(color: Colors.red))])),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: (index * 50).ms).slideX(begin: 0.05);
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'Food': return Icons.restaurant_outlined;
-      case 'Transport': return Icons.directions_bus_outlined;
-      case 'Stay': return Icons.hotel_outlined;
-      case 'Shopping': return Icons.shopping_bag_outlined;
-      default: return Icons.more_horiz_outlined;
-    }
-  }
 }

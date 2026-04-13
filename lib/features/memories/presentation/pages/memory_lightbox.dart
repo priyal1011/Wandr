@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/in_memory_store.dart';
+import '../../../../models/photo_model.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 

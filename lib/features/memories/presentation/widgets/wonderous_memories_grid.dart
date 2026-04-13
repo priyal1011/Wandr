@@ -7,6 +7,7 @@ import 'package:gap/gap.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../core/utils/haptic_feedback_helper.dart';
 import '../../../../main.dart';
+import '../../../../models/photo_model.dart';
 
 class WonderousMemoriesGrid extends StatefulWidget {
   final List<PhotoModel> photos;

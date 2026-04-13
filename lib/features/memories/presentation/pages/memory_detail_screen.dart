@@ -7,6 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import '../../../../models/photo_model.dart';
 
 class MemoryDetailScreen extends StatelessWidget {
   final PhotoModel photo;

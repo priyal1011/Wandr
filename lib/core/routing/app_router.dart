@@ -14,9 +14,41 @@ import '../../features/memories/presentation/pages/memories_screen.dart';
 import '../../features/settings/presentation/pages/settings_screen.dart';
 import '../../features/settings/presentation/pages/edit_profile_screen.dart';
 import '../../features/settings/presentation/pages/avatar_studio_screen.dart';
+import '../../features/auth/presentation/pages/login_screen.dart';
+import '../../features/auth/presentation/pages/signup_screen.dart';
+import '../../features/auth/presentation/cubit/auth_cubit.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/splash',
+  refreshListenable: GoRouterRefreshStream(getIt<AuthCubit>().stream),
+  redirect: (context, state) {
+    final authState = getIt<AuthCubit>().state;
+    final store = getIt<InMemoryStore>();
+    
+    final isSplash = state.matchedLocation == '/splash';
+    final isOnboarding = state.matchedLocation == '/onboarding';
+    final isLogin = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
+    
+    // 1. Always allow Splash
+    if (isSplash) return null;
+
+    // 2. If not logged in
+    if (authState is! AuthSuccess && store.currentUser == null) {
+      // If they haven't seen onboarding, force it
+      if (!store.hasSeenOnboarding) {
+        return isOnboarding ? null : '/onboarding';
+      }
+      // If they've seen onboarding but aren't logged in, allow onboarding or login
+      return (isOnboarding || isLogin) ? null : '/onboarding';
+    }
+
+    // 3. If logged in and trying to go to login/signup/onboarding, go to Home
+    if (authState is AuthSuccess || store.currentUser != null) {
+      if (isLogin || isOnboarding) return '/';
+    }
+
+    return null;
+  },
   routes: [
     GoRoute(
       path: '/splash',
@@ -25,6 +57,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/onboarding',
       builder: (context, state) => const OnboardingScreen(),
+    ),
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: '/signup',
+      builder: (context, state) => const SignupScreen(),
     ),
 
     // 1. SHELL ROUTES (Screens with Bottom Navigation)
@@ -116,3 +156,19 @@ final appRouter = GoRouter(
     ),
   ],
 );
+
+/// Simple class to bridge Stream with GoRouter's Listenable
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+
+  late final dynamic _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}

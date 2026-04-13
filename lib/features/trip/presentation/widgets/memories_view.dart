@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
-import 'package:wandr/core/in_memory_store.dart';
+import 'package:wandr/models/trip_model.dart';
+import 'package:wandr/models/photo_model.dart';
 
 class MemoriesView extends StatefulWidget {
   final TripModel trip;

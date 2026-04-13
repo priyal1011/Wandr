@@ -8,6 +8,7 @@ import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
 import '../../../../core/utils/file_utils.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../models/trip_model.dart';
 
 class TripCreateEditScreen extends StatefulWidget {
   final String? tripId;

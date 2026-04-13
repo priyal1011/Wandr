@@ -4,8 +4,10 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../cubit/auth_cubit.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import '../../../../models/user_model.dart';
 import '../../../../theme/app_theme.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -53,7 +55,10 @@ class _SignupScreenState extends State<SignupScreen> {
           getIt<InMemoryStore>().hasSeenOnboarding = true;
           await getIt<InMemoryStore>().loadFromDisk();
 
-          if (mounted) context.go('/home');
+          // Emit success to trigger router redirection
+          getIt<AuthCubit>().setAuthenticated();
+
+          if (mounted) context.go('/');
         }
       } on FirebaseAuthException catch (e) {
         if (mounted) {

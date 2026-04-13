@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import '../../../../models/photo_model.dart';
 import '../../../../core/widgets/interactive_dialog.dart';
 import '../../../../core/utils/file_utils.dart'; // Added
 import '../../../../core/utils/haptic_feedback_helper.dart';

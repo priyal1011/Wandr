@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
-import 'package:wandr/core/in_memory_store.dart';
+import 'package:http/http.dart' as http;
 import 'package:wandr/core/services/ai_service.dart';
 import 'package:wandr/core/widgets/interactive_dialog.dart';
+import 'package:wandr/models/trip_model.dart';
+import 'package:wandr/models/day_data.dart';
+import 'package:wandr/models/place_data.dart';
 
 class ItineraryView extends StatefulWidget {
   final TripModel trip;
@@ -25,6 +28,7 @@ class _ItineraryViewState extends State<ItineraryView> {
   late List<DayData> _itinerary;
   int _selectedDayIndex = 0;
   bool _isAiLoading = false;
+  http.Client? _aiClient;
 
   @override
   void initState() {
@@ -44,64 +48,96 @@ class _ItineraryViewState extends State<ItineraryView> {
 
   Future<void> _autoFill() async {
     final promptCtrl = TextEditingController();
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => InteractiveDialog(
-        title: 'Magic Auto-Fill',
-        icon: Icons.auto_awesome,
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('What kind of activities are you looking for?', 
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
-            const Gap(12),
-            TextField(
-              controller: promptCtrl,
-              maxLines: 3,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-              decoration: InputDecoration(
-                hintText: 'e.g. "Focus on local food and hidden gems," "Include more hiking," etc.',
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+    bool shouldRetry = true;
+
+    while (shouldRetry) {
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => InteractiveDialog(
+          title: 'Magic Auto-Fill',
+          icon: Icons.auto_awesome,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('What kind of activities are you looking for?', 
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
+              const Gap(12),
+              TextField(
+                controller: promptCtrl,
+                maxLines: 3,
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                decoration: InputDecoration(
+                  hintText: 'e.g. "Focus on local food and hidden gems," "Include more hiking," etc.',
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                ),
               ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlueAccent, foregroundColor: Colors.black),
+              child: const Text('Generate'),
             ),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlueAccent, foregroundColor: Colors.black),
-            child: const Text('Generate'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-    setState(() => _isAiLoading = true);
-    final result = await AiService.generateItinerary(
-      destination: widget.trip.destination,
-      days: 3, 
-      startDate: widget.trip.startDate,
-      customPrompt: promptCtrl.text,
-    );
-    setState(() => _isAiLoading = false);
-    if (result != null) {
-      setState(() {
-        _itinerary = result;
-        widget.onUpdate(_itinerary);
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✨ Trip magic generated!')));
-    } else {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('🛡️ Quota limit reached. Try again in a bit!'), backgroundColor: Colors.orange),
       );
+
+      if (confirmed != true) return;
+      
+      shouldRetry = false; // Default to not retrying unless stopped
+      setState(() => _isAiLoading = true);
+      _aiClient = http.Client();
+
+      try {
+        final result = await AiService.generateItinerary(
+          destination: widget.trip.destination,
+          days: 3, 
+          startDate: widget.trip.startDate,
+          customPrompt: promptCtrl.text,
+          client: _aiClient,
+        );
+
+        if (!mounted) return;
+        setState(() => _isAiLoading = false);
+
+        if (result != null) {
+          setState(() {
+            _itinerary = result;
+            widget.onUpdate(_itinerary);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✨ Trip magic generated!')));
+        } else {
+          // If result is null, it might be due to cancellation or actual error
+          if (_aiClient == null) {
+             shouldRetry = true; // Was cancelled/stopped, show dialog again
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('🛡️ Quota limit reached or network error.'), backgroundColor: Colors.orange),
+            );
+          }
+        }
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _isAiLoading = false);
+        if (_aiClient == null) {
+          shouldRetry = true; // Was cancelled/stopped
+        }
+      } finally {
+        _aiClient?.close();
+        _aiClient = null;
+      }
     }
+  }
+
+  void _stopAi() {
+    _aiClient?.close();
+    _aiClient = null;
+    setState(() => _isAiLoading = false);
   }
 
   void _deleteDay(int index) {
@@ -308,23 +344,36 @@ class _ItineraryViewState extends State<ItineraryView> {
 
   Widget _buildAutoFillButton() {
     return GestureDetector(
-      onTap: _autoFill,
+      onTap: _isAiLoading ? _stopAi : _autoFill,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.lightBlueAccent.withOpacity(0.05),
+          color: _isAiLoading 
+              ? Colors.red.withValues(alpha: 0.1) 
+              : Colors.lightBlueAccent.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.lightBlueAccent.withOpacity(0.2)),
+          border: Border.all(
+            color: _isAiLoading 
+                ? Colors.red.withValues(alpha: 0.2) 
+                : Colors.lightBlueAccent.withValues(alpha: 0.2)
+          ),
         ),
         child: Row(
           children: [
             if (_isAiLoading)
-              const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.lightBlueAccent))
+              const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red))
             else
               const Icon(Icons.auto_awesome, color: Colors.lightBlueAccent, size: 18),
             const Gap(10),
-            const Text('Auto-Fill', style: TextStyle(color: Colors.lightBlueAccent, fontWeight: FontWeight.bold, fontSize: 14)),
+            Text(
+              _isAiLoading ? 'Stop Generation' : 'Auto-Fill', 
+              style: TextStyle(
+                color: _isAiLoading ? Colors.red : Colors.lightBlueAccent, 
+                fontWeight: FontWeight.bold, 
+                fontSize: 14
+              )
+            ),
           ],
         ),
       ),

@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:gap/gap.dart';
 import 'package:wandr/core/in_memory_store.dart';
 import 'package:wandr/main.dart';
+import 'package:wandr/models/trip_model.dart';
 
 class TripMapView extends StatefulWidget {
   final TripModel trip;
