@@ -47,6 +47,7 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
       _startDate = trip.startDate;
       _endDate = trip.endDate;
       _coverPhotoUrl = trip.coverPhoto;
+      _companions = List.from(trip.companions ?? []);
     }
   }
 
@@ -170,6 +171,7 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
   }
 
   Future<void> _saveTrip() async {
+    FocusManager.instance.primaryFocus?.unfocus();
     if (_formKey.currentState!.validate() &&
         _startDate != null &&
         _endDate != null) {
@@ -204,6 +206,7 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
               double.tryParse(_budgetController.text) ?? existing.totalBudget,
           currency: existing.currency,
           coverPhoto: finalPhotoPath ?? existing.coverPhoto,
+          companions: _companions,
           itinerary: existing.itinerary,
           expenses: existing.expenses,
           photos: existing.photos,
@@ -219,6 +222,7 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
           totalBudget: double.tryParse(_budgetController.text) ?? 500.0,
           currency: r'$',
           coverPhoto: finalPhotoPath,
+          companions: _companions,
         );
       }
 
@@ -337,11 +341,107 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
                   );
                 },
               ),
+              const Gap(32),
+              _buildCompanionsSection(),
               const Gap(100),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  final _companionController = TextEditingController();
+  List<String> _companions = [];
+
+  Widget _buildCompanionsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'TRAVEL COMPANIONS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const Text(
+                  'Who is coming with you?',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+            Icon(Icons.group_add_outlined, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)),
+          ],
+        ),
+        const Gap(16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+          ),
+          child: Column(
+            children: [
+              TextField(
+                controller: _companionController,
+                onSubmitted: (value) {
+                  final trimmed = value.trim();
+                  if (trimmed.isNotEmpty && !_companions.contains(trimmed)) {
+                    setState(() {
+                      _companions.add(trimmed);
+                      _companionController.clear();
+                    });
+                  }
+                },
+                decoration: InputDecoration(
+                  hintText: 'Add a friend\'s name...',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.add_circle_outline),
+                    onPressed: () {
+                      final trimmed = _companionController.text.trim();
+                      if (trimmed.isNotEmpty && !_companions.contains(trimmed)) {
+                        setState(() {
+                          _companions.add(trimmed);
+                          _companionController.clear();
+                        });
+                      }
+                    },
+                  ),
+                  border: InputBorder.none,
+                ),
+              ),
+              if (_companions.isNotEmpty) ...[
+                const Divider(),
+                const Gap(8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _companions.asMap().entries.map((entry) {
+                    return Chip(
+                      label: Text(entry.value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      onDeleted: () => setState(() => _companions.removeAt(entry.key)),
+                      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                      side: BorderSide.none,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 

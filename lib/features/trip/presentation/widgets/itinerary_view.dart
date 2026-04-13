@@ -220,7 +220,10 @@ class _ItineraryViewState extends State<ItineraryView> {
         Expanded(
           child: _itinerary.isEmpty 
             ? _buildEmptyState()
-            : _buildDayPlaces(_selectedDayIndex, _itinerary[_selectedDayIndex]),
+            : _buildDayPlaces(
+                _selectedDayIndex.clamp(0, _itinerary.length - 1), 
+                _itinerary[_selectedDayIndex.clamp(0, _itinerary.length - 1)]
+              ),
         ),
       ],
     );

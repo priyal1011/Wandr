@@ -53,7 +53,11 @@ class _TripMapViewState extends State<TripMapView> {
   }
 
   void _zoom(double delta) {
-    _mapController.move(_mapController.camera.center, _mapController.camera.zoom + delta);
+    try {
+      _mapController.move(_mapController.camera.center, _mapController.camera.zoom + delta);
+    } catch (_) {
+      // Controller might not be attached yet
+    }
   }
 
   @override

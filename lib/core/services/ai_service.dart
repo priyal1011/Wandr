@@ -99,21 +99,20 @@ JSON Structure:
 
   static List<DayData>? _parseJson(String text) {
     String rawJson = text.trim();
-    if (rawJson.contains('```')) {
-      final parts = rawJson.split('```');
-      for (var part in parts) {
-        String sanitized = part.trim();
-        if (sanitized.startsWith('[') || sanitized.startsWith('json')) {
-          rawJson = sanitized;
-          if (rawJson.startsWith('json')) rawJson = rawJson.substring(4).trim();
-          break;
-        }
-      }
+    
+    // Find the first '[' and last ']' to extract just the JSON array
+    final int firstBracket = rawJson.indexOf('[');
+    final int lastBracket = rawJson.lastIndexOf(']');
+    
+    if (firstBracket != -1 && lastBracket != -1 && lastBracket > firstBracket) {
+      rawJson = rawJson.substring(firstBracket, lastBracket + 1);
     }
+
     try {
       final List<dynamic> decoded = jsonDecode(rawJson);
       return decoded.map((e) => DayData.fromJson(e as Map<String, dynamic>)).toList();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[Wandr AI] JSON Parse Error: $e');
       return null;
     }
   }
