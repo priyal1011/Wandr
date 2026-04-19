@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 import 'package:wandr/models/trip_model.dart';
 import 'package:wandr/models/photo_model.dart';
 
@@ -31,7 +33,109 @@ class MemoriesViewState extends State<MemoriesView> {
   }
 
   Future<void> addPhoto() async {
-    // Note: ImagePicker logic is usually handled here or in a service
+    _showAddMemoryDialog();
+  }
+
+  void _showAddMemoryDialog() {
+    final captionController = TextEditingController();
+    final notesController = TextEditingController();
+    String? selectedPath;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Text('New Memory', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.9,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () async {
+                      final picker = ImagePicker();
+                      final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+                      if (image != null) setDialogState(() => selectedPath = image.path);
+                    },
+                    child: Container(
+                      height: 180,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                      ),
+                      child: selectedPath == null
+                          ? const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_a_photo_outlined, size: 40, color: Colors.grey),
+                                Gap(8),
+                                Text('Tap to Upload Photo', style: TextStyle(color: Colors.grey)),
+                              ],
+                            )
+                          : ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.file(File(selectedPath!), fit: BoxFit.cover),
+                            ),
+                    ),
+                  ),
+                  const Gap(20),
+                  TextField(
+                    controller: captionController,
+                    decoration: InputDecoration(
+                      labelText: 'Caption (Optional)',
+                      hintText: 'A timeless capture...',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                  const Gap(16),
+                  TextField(
+                    controller: notesController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: 'Story Notes (Optional)',
+                      hintText: 'Tell the story...',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: selectedPath == null ? null : () {
+                final newPhoto = PhotoModel(
+                  id: const Uuid().v4(),
+                  tripId: widget.trip.id,
+                  url: selectedPath!,
+                  caption: captionController.text.trim(),
+                  notes: notesController.text.trim(),
+                );
+
+                setState(() {
+                  _photos = [..._photos, newPhoto];
+                  widget.onUpdate(_photos);
+                });
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.lightBlueAccent,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Save Memory'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override

@@ -129,9 +129,9 @@ class _TripDetailScreenState extends State<TripDetailScreen> with SingleTickerPr
                         unselectedLabelColor: Colors.grey,
                         labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11), // Smaller for legacy screens
                         tabs: const [
-                          Tab(icon: Icon(Icons.calendar_month_outlined, size: 18), text: 'Plan'), // Simplified for width
+                          Tab(icon: Icon(Icons.calendar_month_outlined, size: 18), text: 'Itinerary'), // Renamed from Plan
                           Tab(icon: Icon(Icons.payments_outlined, size: 18), text: 'Budget'),
-                          Tab(icon: Icon(Icons.photo_library_outlined, size: 18), text: 'Diary'),
+                          Tab(icon: Icon(Icons.photo_library_outlined, size: 18), text: 'Memories'), // Renamed from Diary
                           Tab(icon: Icon(Icons.map_outlined, size: 18), text: 'Map'),
                         ],
                       ),

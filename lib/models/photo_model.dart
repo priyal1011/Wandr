@@ -3,6 +3,7 @@ class PhotoModel {
   final String? tripId;
   final String url;
   final String? caption;
+  final String? notes;
   final String? dayId;
 
   PhotoModel({
@@ -10,15 +11,17 @@ class PhotoModel {
     this.tripId,
     required this.url,
     this.caption,
+    this.notes,
     this.dayId,
   });
 
-  PhotoModel copyWith({String? url, String? caption, String? dayId}) =>
+  PhotoModel copyWith({String? url, String? caption, String? notes, String? dayId}) =>
       PhotoModel(
         id: id,
         tripId: tripId,
         url: url ?? this.url,
         caption: caption ?? this.caption,
+        notes: notes ?? this.notes,
         dayId: dayId ?? this.dayId,
       );
 
@@ -27,6 +30,7 @@ class PhotoModel {
     'tripId': tripId,
     'url': url,
     'caption': caption,
+    'notes': notes,
     'dayId': dayId,
   };
 
@@ -35,6 +39,7 @@ class PhotoModel {
     tripId: json['tripId'],
     url: json['url'] ?? '',
     caption: json['caption'],
+    notes: json['notes'],
     dayId: json['dayId'],
   );
 }

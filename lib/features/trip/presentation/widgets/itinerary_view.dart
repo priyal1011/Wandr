@@ -437,14 +437,15 @@ controller: notesCtrl,
       ),
     );
 
-    if (confirmed == true && nameCtrl.text.isNotEmpty) {
+    if (confirmed == true && nameCtrl.text.trim().isNotEmpty) {
       setState(() {
+        if (dayIndex < 0 || dayIndex >= _itinerary.length) return;
         _itinerary[dayIndex].places.add(
           PlaceData(
-            name: nameCtrl.text,
-            time: timeCtrl.text.isEmpty ? '--:--' : timeCtrl.text,
+            name: nameCtrl.text.trim(),
+            time: timeCtrl.text.isEmpty ? '--:--' : timeCtrl.text.trim(),
             type: type,
-            notes: notesCtrl.text,
+            notes: notesCtrl.text.trim(),
           ),
         );
         widget.onUpdate(_itinerary);

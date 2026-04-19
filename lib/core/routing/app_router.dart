@@ -18,6 +18,7 @@ import '../../features/auth/presentation/pages/forgot_password_screen.dart';
 import '../../features/auth/presentation/pages/login_screen.dart';
 import '../../features/auth/presentation/pages/signup_screen.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
+import '../../models/photo_model.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/splash',
@@ -137,7 +138,28 @@ final appRouter = GoRouter(
         final id = state.pathParameters['id']!;
         final fromTrip = state.uri.queryParameters['fromTrip'] == 'true';
         final store = getIt<InMemoryStore>();
-        final photo = store.photos.firstWhere((p) => p.id == id);
+        
+        // Search globally first, then in trips if not found
+        PhotoModel? photo;
+        try {
+          photo = store.photos.where((p) => p.id == id).firstOrNull;
+          if (photo == null) {
+            for (final t in store.trips) {
+              final p = t.photos?.where((p) => p.id == id).firstOrNull;
+              if (p != null) {
+                photo = p;
+                break;
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('[Wandr] Router photo search error: $e');
+        }
+
+        if (photo == null) {
+          return const MaterialPage(child: Scaffold(body: Center(child: Text('Memory not found'))));
+        }
+
         return MaterialPage(
           key: state.pageKey,
           fullscreenDialog: true,

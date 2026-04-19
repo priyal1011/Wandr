@@ -25,13 +25,22 @@ class _TripMapViewState extends State<TripMapView> {
     _markers = List.from(widget.trip.markers ?? []);
   }
 
+  @override
+  void didUpdateWidget(TripMapView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.trip.markers != widget.trip.markers) {
+      setState(() {
+        _markers = List.from(widget.trip.markers ?? []);
+      });
+    }
+  }
+
   void _handleTap(TapPosition tapPosition, LatLng point) {
     setState(() {
-      // Check if tapping near an existing marker to "unpin"
       final existingIndex = _markers.indexWhere((m) {
         final double dist = (m.point.latitude - point.latitude).abs() + 
                            (m.point.longitude - point.longitude).abs();
-        return dist < 0.005; // Tight tolerance for tapping a pin
+        return dist < 0.005;
       });
 
       if (existingIndex != -1) {
@@ -47,7 +56,7 @@ class _TripMapViewState extends State<TripMapView> {
         );
       }
       
-      // Save changes back to store
+      // Update trip and sync to cloud
       widget.trip.markers = _markers;
       getIt<InMemoryStore>().saveToDisk();
     });

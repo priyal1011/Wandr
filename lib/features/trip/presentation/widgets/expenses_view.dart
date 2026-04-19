@@ -376,14 +376,16 @@ controller: amountCtrl,
       final inSplit = expense.splitWith ?? ['Me'];
       if (inSplit.isEmpty || expense.amount == 0) continue;
       
-      final share = expense.amount / inSplit.length;
+      final share = inSplit.isEmpty ? 0.0 : expense.amount / inSplit.length;
       
       // Payer gets back the full amount
       balances[payer] = (balances[payer] ?? 0.0) + expense.amount;
       
       // Everyone in the split (including payer) owes their share
       for (var person in inSplit) {
-        balances[person] = (balances[person] ?? 0.0) - share;
+        if (balances.containsKey(person)) {
+          balances[person] = (balances[person] ?? 0.0) - share;
+        }
       }
     }
     return balances;

@@ -15,15 +15,16 @@ class TripCubit extends Cubit<TripState> {
   Future<void> loadTrip() async {
     emit(TripLoading());
     try {
-      // Simulate slight delay for professional skeleton feel
       await Future.delayed(const Duration(milliseconds: 600));
       
-      final trip = _store.trips.firstWhere(
-        (t) => t.id == tripId,
-        orElse: () => _store.trips.first,
-      );
+      final trip = _store.trips.where((t) => t.id == tripId).firstOrNull ?? 
+                   (_store.trips.isNotEmpty ? _store.trips.first : null);
       
-      emit(TripLoaded(trip));
+      if (trip != null) {
+        emit(TripLoaded(trip));
+      } else {
+        emit(const TripError('Trip not found. It might have been deleted.'));
+      }
     } catch (e) {
       emit(const TripError('Failed to load trip details.'));
     }
@@ -57,6 +58,20 @@ class TripCubit extends Cubit<TripState> {
     if (state is TripLoaded) {
       final trip = (state as TripLoaded).trip;
       trip.photos = data;
+      
+      // Update global memories as well
+      for (final p in data) {
+        if (!_store.photos.every((gp) => gp.id != p.id)) {
+           // Skip if already exists or update it
+           final idx = _store.photos.indexWhere((gp) => gp.id == p.id);
+           if (idx != -1) {
+             _store.photos[idx] = p;
+           }
+        } else {
+           _store.photos.add(p);
+        }
+      }
+      
       _store.saveToDisk();
       emit((state as TripLoaded).copyWith(trip: trip));
     }
