@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -129,6 +130,9 @@ class InMemoryStore extends ChangeNotifier {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
+  bool _isSyncingCloud = false;
+
+  bool get isSyncingCloud => _isSyncingCloud;
 
   Future<void> deletePhoto(String id) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -160,23 +164,34 @@ class InMemoryStore extends ChangeNotifier {
   }
 
   Future<void> deleteTrip(String id) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('trips')
-            .doc(id)
-            .delete();
-      } catch (e) {
-        debugPrint('[Wandr] Firestore trip delete error: $e');
-      }
-    }
+    // 1. INSTANT MEMORY REMOVAL (No waiting)
     trips.removeWhere((t) => t.id == id);
     photos.removeWhere((p) => p.tripId == id);
-    await saveToDisk();
     notifyListeners();
+
+    // 2. ISOLATED BACKGROUND ZONE for Disk and Cloud
+    unawaited(runZonedGuarded(() async {
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          // Fire and forget Firestore removal to avoid waiting on GMS report stats
+          await _firestore
+              .collection('users')
+              .doc(user.uid)
+              .collection('trips')
+              .doc(id)
+              .delete()
+              .timeout(const Duration(seconds: 5));
+        }
+        
+        // Finalize disk cleanups in a silent zone
+        await saveToDisk(skipCloud: true);
+      } catch (e) {
+        debugPrint('[Wandr] Isolated deletion background error intercepted: $e');
+      }
+    }, (error, stack) {
+       debugPrint('[Wandr] Shielded Deletion caught exception: $error');
+    })!);
   }
 
   static const List<String> availableCurrencies = [
@@ -227,8 +242,10 @@ class InMemoryStore extends ChangeNotifier {
   /// Syncs data with Firestore if a user is logged in.
   Future<void> syncWithCloud() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null || _isSyncingCloud) return;
 
+    _isSyncingCloud = true;
+    notifyListeners();
     try {
       final userDoc = _firestore.collection('users').doc(user.uid);
       if (currentUser != null) {
@@ -279,6 +296,9 @@ class InMemoryStore extends ChangeNotifier {
       debugPrint('[Wandr] Cloud sync completed.');
     } catch (e) {
       debugPrint('[Wandr] Cloud sync error: $e');
+    } finally {
+      _isSyncingCloud = false;
+      notifyListeners();
     }
   }
 
@@ -395,18 +415,27 @@ class InMemoryStore extends ChangeNotifier {
   }
 
   Future<void> resetData() async {
+    // 1. Instant reset for UI responsiveness
     currentUser = null;
     trips = [];
     photos = [];
     places = [];
     expenses = [];
     hasSeenOnboarding = false;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tripsKey);
-    await prefs.remove(_photosKey);
-    await prefs.remove(_hasDataKey);
-    await prefs.remove('has_seen_onboarding');
     notifyListeners();
+
+    // 2. Silent background disk wipe in an isolated zone
+    unawaited(runZonedGuarded(() async {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_tripsKey);
+        await prefs.remove(_photosKey);
+        await prefs.remove(_hasDataKey);
+        await prefs.remove('has_seen_onboarding');
+      } catch (e) {
+        debugPrint('[Wandr] Isolated reset background error caught: $e');
+      }
+    }, (error, stack) {})!);
   }
 
   Future<void> addTrip(TripModel trip) async {

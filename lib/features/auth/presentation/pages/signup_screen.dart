@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../cubit/auth_cubit.dart';
 import '../../../../core/in_memory_store.dart';
+import '../../../../core/utils/haptic_feedback_helper.dart';
 import '../../../../main.dart';
 import '../../../../models/user_model.dart';
 import '../../../../theme/app_theme.dart';
@@ -26,10 +27,18 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _signup() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
+
       try {
         final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
@@ -55,7 +64,6 @@ class _SignupScreenState extends State<SignupScreen> {
           getIt<InMemoryStore>().hasSeenOnboarding = true;
           await getIt<InMemoryStore>().loadFromDisk();
 
-          // Emit success to trigger router redirection
           getIt<AuthCubit>().setAuthenticated();
 
           if (mounted) context.go('/');
@@ -74,11 +82,9 @@ class _SignupScreenState extends State<SignupScreen> {
         }
       } catch (e) {
         if (mounted) {
-          // Temporarily show the full error string to diagnose the environment issue
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: $e'),
-              backgroundColor: Colors.redAccent,
               behavior: SnackBarBehavior.floating,
               margin: const EdgeInsets.all(24),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -93,128 +99,173 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure the system bars don't interfere with the design
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      extendBody: true,
-      extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: MediaQuery.of(context).size.height * 0.4,
-            child: Container(
-              padding: const EdgeInsets.all(40),
-              decoration: const BoxDecoration(
-                gradient: AppTheme.brandGradient,
-                borderRadius: BorderRadius.only(bottomLeft: Radius.circular(60)),
-              ),
-              child: SafeArea(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                     Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
-                      child: const Icon(Icons.rocket_launch_rounded, color: Colors.white, size: 40),
-                    ),
-                    const Gap(24),
-                    Text(
-                      'Your Journey\nStarts Here.',
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, height: 1.2),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+      backgroundColor: AppTheme.darkBackground,
+      resizeToAvoidBottomInset: true,
+      body: SingleChildScrollView(
+        child: Container(
+          constraints: BoxConstraints(minHeight: MediaQuery.sizeOf(context).height),
+          decoration: const BoxDecoration(
+            gradient: AppTheme.brandGradient,
           ),
-          
-          Positioned.fill(
-            top: MediaQuery.of(context).size.height * 0.35,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: const BorderRadius.only(topRight: Radius.circular(60)),
-              ),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      const Gap(24),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: InputDecoration(
-                          labelText: 'Full Name',
-                          prefixIcon: const Icon(Icons.person_outline_rounded),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Gap(40),
+                  // Logo Container
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.05),
+                    ),
+                    child: Center(
+                      child: ClipOval(
+                        child: Image.asset(
+                          isDark ? 'assets/images/logo_dark.png' : 'assets/images/logo.png',
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.rocket_launch_rounded, color: Colors.white, size: 50),
                         ),
-                        validator: (v) => (v == null || v.isEmpty) ? 'Enter your travel name.' : null,
-                      ).animate().fadeIn(delay: 200.ms).slideX(begin: 0.1),
-                      const Gap(16),
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: InputDecoration(
-                          labelText: 'Email Address',
-                          prefixIcon: const Icon(Icons.email_outlined),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
-                        ),
-                        validator: (v) => (v == null || v.isEmpty) ? 'Enter your email.' : null,
-                      ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.1),
-                      const Gap(16),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        decoration: InputDecoration(
-                          labelText: 'Secure Password',
-                          prefixIcon: const Icon(Icons.lock_outline_rounded),
-                          suffixIcon: IconButton(
-                            icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                          ),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
-                        ),
-                        validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters required.' : null,
-                      ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.1),
-                      const Gap(40),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 60,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _signup,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            elevation: 10,
-                            shadowColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
-                          ),
-                          child: _isLoading ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 3) : const Text('CREATE ADVENTURE', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                        ),
-                      ).animate().scale(delay: 500.ms, curve: Curves.easeOutBack),
-                      const Gap(24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('Already wandering? ', style: TextStyle(color: Colors.grey)),
-                          GestureDetector(
-                            onTap: () => context.go('/login'),
-                            child: Text('LOG IN', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
                       ),
-                      const Gap(48), // Padding for the bottom navigation area
-                    ],
+                    ),
+                  ).animate().fadeIn(duration: 800.ms).scale(begin: const Offset(0.9, 0.9)),
+                  const Gap(24),
+                  Text(
+                    'Your Journey\nStarts Here.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(  
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      height: 1.2,
+                      letterSpacing: -1,
+                    ),
                   ),
-                ),
+                  const Gap(32),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          stylusHandwritingEnabled: false,
+                          controller: _nameController,
+                          style: const TextStyle(color: Colors.white),        
+                          decoration: InputDecoration(
+                            labelText: 'Full Name',
+                            labelStyle: const TextStyle(color: Colors.white60),
+                            prefixIcon: const Icon(Icons.person_outline_rounded, color: Colors.white70),
+                            filled: true,
+                            fillColor: const Color(0xFF1E293B),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),        
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          keyboardType: TextInputType.name,
+                          magnifierConfiguration: TextMagnifierConfiguration.disabled,
+                          textInputAction: TextInputAction.next,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          validator: (v) => (v == null || v.isEmpty) ? 'Enter your travel name.' : null,
+                        ),
+                        const Gap(12),
+                        TextFormField(
+                          stylusHandwritingEnabled: false,
+                          controller: _emailController,
+                          style: const TextStyle(color: Colors.white),        
+                          decoration: InputDecoration(
+                            labelText: 'Wandr Email',
+                            labelStyle: const TextStyle(color: Colors.white60),
+                            prefixIcon: const Icon(Icons.email_outlined, color: Colors.white70),
+                            filled: true,
+                            fillColor: const Color(0xFF1E293B),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),        
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          magnifierConfiguration: TextMagnifierConfiguration.disabled,
+                          textInputAction: TextInputAction.next,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          validator: (v) => (v == null || v.isEmpty) ? 'Enter your travel email.' : null,
+                        ),
+                        const Gap(12),
+                        TextFormField(
+                          stylusHandwritingEnabled: false,
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          style: const TextStyle(color: Colors.white),        
+                          decoration: InputDecoration(
+                            labelText: 'Secure Password',
+                            labelStyle: const TextStyle(color: Colors.white60),
+                            prefixIcon: const Icon(Icons.lock_outline_rounded, color: Colors.white70),
+                            suffixIcon: IconButton(
+                              icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: Colors.white70),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFF1E293B),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),        
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          keyboardType: TextInputType.visiblePassword,
+                          magnifierConfiguration: TextMagnifierConfiguration.disabled,
+                          textInputAction: TextInputAction.done,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters required.' : null,
+                        ),
+                        const Gap(24),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 60,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : () {
+                              HapticHelper.medium();
+                              _signup();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.accentBlue,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                              elevation: 0,
+                            ),
+                            child: _isLoading
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : const Text('CREATE ADVENTURE', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                          ),
+                        ).animate().scale(delay: 300.ms),
+                        const Gap(8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("Already wandering?", style: TextStyle(color: Colors.white.withValues(alpha: 0.6))),
+                            TextButton(
+                              onPressed: () => context.go('/login'),
+                              child: const Text('Log In', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                        const Gap(40),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

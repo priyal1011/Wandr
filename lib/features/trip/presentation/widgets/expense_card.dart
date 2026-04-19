@@ -33,6 +33,7 @@ class ExpenseCard extends StatelessWidget {
         boxShadow: !isDark ? [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))] : [],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center, // Strong centering for the whole row
         children: [
           Container(
             padding: const EdgeInsets.all(12),
@@ -46,48 +47,128 @@ class ExpenseCard extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(expense.name, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
-                Row(
-                  children: [
-                    Text(DateFormat('MMM dd').format(expense.date), style: TextStyle(color: Colors.grey, fontSize: 12)),
-                    if (expense.splitWith != null && expense.splitWith!.length > 1) ...[
-                      Text(' • ', style: TextStyle(color: Colors.grey.withValues(alpha: 0.5), fontSize: 12)),
-                      Icon(Icons.group_outlined, size: 12, color: Colors.lightBlueAccent.withValues(alpha: 0.7)),
-                      const Gap(4),
-                      Text('Split with ${expense.splitWith!.length}', style: TextStyle(color: Colors.lightBlueAccent.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.bold)),
+                SizedBox(
+                  height: 24, // Precise height to lock baseline
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          expense.name,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18, // High-visibility font
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const Gap(8),
+                      Text(
+                        '$currency${expense.amount.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 20, // Bold price exposure
+                        ),
+                      ),
                     ],
+                  ),
+                ),
+                const Gap(1), // Balanced separation
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          DateFormat('MMM dd').format(expense.date),
+                          style: TextStyle(
+                            color: Colors.grey.withValues(alpha: 0.8),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (expense.splitWith != null && expense.splitWith!.length > 1) ...[
+                          Text(
+                            ' • ',
+                            style: TextStyle(
+                              color: Colors.grey.withValues(alpha: 0.5),
+                              fontSize: 12,
+                            ),
+                          ),
+                          Icon(
+                            Icons.group_outlined,
+                            size: 15,
+                            color: Colors.lightBlueAccent.withValues(alpha: 0.7),
+                          ),
+                          const Gap(5),
+                          Text(
+                            'Split with ${expense.splitWith!.length}',
+                            style: TextStyle(
+                              color: Colors.lightBlueAccent.withValues(alpha: 0.7),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    _buildMoreButton(),
                   ],
                 ),
                 if (expense.paidBy != null && expense.paidBy != 'Me') ...[
                   const Gap(2),
-                  Text('Paid by ${expense.paidBy}', style: TextStyle(color: Colors.grey.withValues(alpha: 0.6), fontSize: 10, fontStyle: FontStyle.italic)),
+                  Text(
+                    'Paid by ${expense.paidBy}',
+                    style: TextStyle(
+                      color: Colors.grey.withValues(alpha: 0.6),
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
                 ],
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('$currency${expense.amount.toStringAsFixed(0)}',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w900, fontSize: 18)),
-              PopupMenuButton<String>(
-                icon: Icon(Icons.more_horiz, size: 18, color: Colors.grey.withValues(alpha: 0.5)),
-                padding: EdgeInsets.zero,
-                onSelected: (val) {
-                  if (val == 'edit') onEdit();
-                  if (val == 'delete') onDelete();
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit_outlined, size: 18), Gap(8), Text('Edit')])),
-                  const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_outline, color: Colors.red, size: 18), Gap(8), Text('Delete', style: TextStyle(color: Colors.red))])),
-                ],
-              ),
-            ],
-          ),
         ],
       ),
     ).animate().fadeIn(delay: (index * 50).ms).slideX(begin: 0.05);
+  }
+
+  Widget _buildMoreButton() {
+    return PopupMenuButton<String>(
+      icon: Icon(
+        Icons.more_horiz,
+        size: 18,
+        color: Colors.grey.withValues(alpha: 0.5),
+      ),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+      onSelected: (val) {
+        if (val == 'edit') onEdit();
+        if (val == 'delete') onDelete();
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'edit',
+          child: Row(children: [Icon(Icons.edit_outlined, size: 18), Gap(8), Text('Edit')]),
+        ),
+        const PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline, color: Colors.red, size: 18),
+              Gap(8),
+              Text('Delete', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   IconData _getCategoryIcon(String category) {

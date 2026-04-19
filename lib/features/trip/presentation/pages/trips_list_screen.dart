@@ -1,11 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import '../../../../core/widgets/wandr_image.dart';
 import '../../../../models/trip_model.dart';
 
 class TripsListScreen extends StatelessWidget {
@@ -28,6 +29,23 @@ class TripsListScreen extends StatelessWidget {
           isUpcoming ? 'Upcoming Adventures' : 'Past Journeys',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          ListenableBuilder(
+            listenable: getIt<InMemoryStore>(),
+            builder: (context, _) {
+              if (!getIt<InMemoryStore>().isSyncingCloud) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Center(
+                  child: const Hero(
+                    tag: 'sync_indicator',
+                    child: Icon(Icons.cloud_sync_outlined, size: 20, color: Colors.lightBlueAccent),
+                  ),
+                ).animate(onPlay: (c) => c.repeat()).shimmer(duration: const Duration(seconds: 2)),
+              );
+            },
+          ),
+        ],
       ),
       body: Skeletonizer(
         enabled: trips
@@ -97,42 +115,12 @@ class _FullTripCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-              child:
-                  trip.coverPhoto != null &&
-                      !trip.coverPhoto!.startsWith('http')
-                  ? Image.file(
-                      File(trip.coverPhoto!),
-                      width: double.infinity,
-                      height: 180,
-                      fit: BoxFit.cover,
-                      errorBuilder: (c, e, s) => Container(
-                        height: 180,
-                        color: Colors.grey.shade300,
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    )
-                  : Image.network(
-                      trip.coverPhoto ??
-                          'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
-                      width: double.infinity,
-                      height: 180,
-                      fit: BoxFit.cover,
-                      errorBuilder: (c, e, s) => Container(
-                        height: 180,
-                        color: Colors.grey.shade300,
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
+            WandrImage(
+              source: trip.coverPhoto,
+              width: double.infinity,
+              height: 180,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              heroTag: 'trip_cover_${trip.id}',
             ),
             Padding(
               padding: const EdgeInsets.all(20),

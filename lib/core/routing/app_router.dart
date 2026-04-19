@@ -14,6 +14,7 @@ import '../../features/memories/presentation/pages/memories_screen.dart';
 import '../../features/settings/presentation/pages/settings_screen.dart';
 import '../../features/settings/presentation/pages/edit_profile_screen.dart';
 import '../../features/settings/presentation/pages/avatar_studio_screen.dart';
+import '../../features/auth/presentation/pages/forgot_password_screen.dart';
 import '../../features/auth/presentation/pages/login_screen.dart';
 import '../../features/auth/presentation/pages/signup_screen.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
@@ -27,7 +28,9 @@ final appRouter = GoRouter(
     
     final isSplash = state.matchedLocation == '/splash';
     final isOnboarding = state.matchedLocation == '/onboarding';
-    final isLogin = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
+    final isAuth = state.matchedLocation == '/login' || 
+                   state.matchedLocation == '/signup' || 
+                   state.matchedLocation == '/forgot-password'; // Allowed auth pages
     
     // 1. Always allow Splash
     if (isSplash) return null;
@@ -38,13 +41,13 @@ final appRouter = GoRouter(
       if (!store.hasSeenOnboarding) {
         return isOnboarding ? null : '/onboarding';
       }
-      // If they've seen onboarding but aren't logged in, allow onboarding or login
-      return (isOnboarding || isLogin) ? null : '/onboarding';
+      // If they've seen onboarding but aren't logged in, allow onboarding or auth pages
+      return (isOnboarding || isAuth) ? null : '/onboarding';
     }
 
     // 3. If logged in and trying to go to login/signup/onboarding, go to Home
     if (authState is AuthSuccess || store.currentUser != null) {
-      if (isLogin || isOnboarding) return '/';
+      if (isAuth || isOnboarding) return '/';
     }
 
     return null;
@@ -65,6 +68,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/signup',
       builder: (context, state) => const SignupScreen(),
+    ),
+    GoRoute(
+      path: '/forgot-password',
+      builder: (context, state) => const ForgotPasswordScreen(),
     ),
 
     // 1. SHELL ROUTES (Screens with Bottom Navigation)

@@ -64,7 +64,7 @@ class TripCubit extends Cubit<TripState> {
 
   Future<void> deleteTrip() async {
     try {
-      _store.deleteTrip(tripId);
+      await _store.deleteTrip(tripId);
       emit(TripDeleted());
     } catch (e) {
       emit(const TripError('Failed to delete trip.'));

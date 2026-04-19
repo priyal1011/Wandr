@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
@@ -7,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'core/in_memory_store.dart';
 import 'core/routing/app_router.dart';
 import 'theme/app_theme.dart';
@@ -59,22 +61,47 @@ Future<void> setup() async {
   }
 }
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
-  
-  // Immersive Edge-to-Edge System UI Strategy
-  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarDividerColor: Colors.transparent,
-    ),
-  );
-  
-  await setup();
-  runApp(const WandrApp());
+void main() {
+  runZonedGuarded(() async {
+    try {
+      WidgetsFlutterBinding.ensureInitialized();
+      
+      // SHIELD: Prevent font-fetching exceptions from killing the app
+      GoogleFonts.config.allowRuntimeFetching = true;
+      
+      // Safety wrap for environment loading
+      try {
+        await dotenv.load(fileName: ".env");
+      } catch (e) {
+        debugPrint('Warning: .env file not found. Error: $e');
+      }
+      
+      // TITANIUM STABILITY: Standard Mode (Prevents Samsung Autofill Crashes)
+      try {
+        await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      } catch (e) {
+        debugPrint('SystemChrome error: ');
+      }
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: Color(0xFF0F172A), 
+          systemNavigationBarIconBrightness: Brightness.light,
+          systemNavigationBarDividerColor: Colors.transparent,
+        ),
+      );
+      
+      await setup();
+    } catch (e) {
+      debugPrint('Critical Startup Error: $e');
+    }
+    
+    // GUARANTEE the App Window attaches; if initialization fails, it still opens
+    runApp(const WandrApp());
+  }, (error, stack) {
+    debugPrint('[Wandr] Shield intercepted background exception: $error');
+  });
 }
 
 class WandrApp extends StatefulWidget {
@@ -90,8 +117,20 @@ class WandrAppState extends State<WandrApp> {
   @override
   void initState() {
     super.initState();
-    final isDark = getIt<InMemoryStore>().settings.isDarkMode;
-    _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    _initializeTheme();
+  }
+
+  void _initializeTheme() {
+    try {
+      if (getIt.isRegistered<InMemoryStore>()) {
+        final isDark = getIt<InMemoryStore>().settings.isDarkMode;
+        setState(() {
+          _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+        });
+      }
+    } catch (e) {
+      debugPrint('Theme Initialization Safety Triggered: $e');
+    }
   }
 
   void toggleTheme(bool isDark) {

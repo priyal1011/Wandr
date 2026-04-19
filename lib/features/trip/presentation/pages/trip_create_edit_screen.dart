@@ -205,7 +205,7 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
           endDate: _endDate!,
           totalBudget:
               double.tryParse(_budgetController.text) ?? existing.totalBudget,
-          currency: existing.currency,
+          currency: store.currentCurrency, // Inherit current currency on update
           coverPhoto: finalPhotoPath ?? existing.coverPhoto,
           companions: _companions,
           itinerary: existing.itinerary,
@@ -221,7 +221,7 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
           startDate: _startDate!,
           endDate: _endDate!,
           totalBudget: double.tryParse(_budgetController.text) ?? 500.0,
-          currency: r'$',
+          currency: store.currentCurrency, // Correctly use the selected currency
           coverPhoto: finalPhotoPath,
           companions: _companions,
         );
@@ -286,7 +286,8 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
               _buildPhotoPicker(),
               const Gap(32),
               TextFormField(
-                controller: _nameController,
+                stylusHandwritingEnabled: false,
+controller: _nameController,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -302,10 +303,12 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
                 validator: (v) => (v == null || v.isEmpty)
                     ? 'Enter a name for your journey.'
                     : null,
+                
               ),
               const Gap(16),
               TextFormField(
-                controller: _destinationController,
+                stylusHandwritingEnabled: false,
+controller: _destinationController,
                 decoration: InputDecoration(
                   labelText: 'Destination',
                   prefixIcon: const Icon(Icons.explore_outlined),
@@ -315,6 +318,7 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
                 ),
                 validator: (v) =>
                     (v == null || v.isEmpty) ? 'Where are we going?' : null,
+                
               ),
               const Gap(24),
               Row(
@@ -329,7 +333,8 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
                 listenable: getIt<InMemoryStore>(),
                 builder: (context, _) {
                   return TextFormField(
-                    controller: _budgetController,
+                    stylusHandwritingEnabled: false,
+controller: _budgetController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: 'Estimated Budget',
@@ -394,7 +399,8 @@ class _TripCreateEditScreenState extends State<TripCreateEditScreen> {
           child: Column(
             children: [
               TextField(
-                controller: _companionController,
+                stylusHandwritingEnabled: false,
+controller: _companionController,
                 onSubmitted: (value) {
                   final trimmed = value.trim();
                   if (trimmed.isNotEmpty && !_companions.contains(trimmed)) {

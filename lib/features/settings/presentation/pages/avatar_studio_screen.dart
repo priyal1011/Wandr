@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttermoji/fluttermoji.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
 import '../../../../models/user_model.dart';
@@ -36,6 +37,12 @@ class _AvatarStudioScreenState extends State<AvatarStudioScreen> {
                   fluttermojiCode: fluttermojiCode,
                 );
                 await store.saveToDisk();
+
+                // PERSIST TO FIRESTORE
+                await FirebaseFirestore.instance.collection('users').doc(user.id).update({
+                  'fluttermojiCode': fluttermojiCode,
+                  'photoUrl': null, // Ensure photoUrl is cleared in DB too
+                });
               }
               if (context.mounted) context.pop();
             },

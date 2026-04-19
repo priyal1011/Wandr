@@ -4,7 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Brand Colors - High-End 'Midnight' Palette (Simple, Creative, Professional)
-  static const Color accentCyan = Color(0xFF0EA5E9); // Sophisticated Sky Blue
+  // Spacing Tokens
+  static const double spacingExtraSmall = 4.0;
+  static const double spacingSmall = 8.0;
+  static const double spacingMedium = 16.0;
+  static const double spacingLarge = 24.0;
+  static const double spacingExtraLarge = 40.0;
+
+  static const Color accentCyan = Color(0xFF00E5FF); // Sophisticated Sky Blue
   static const Color accentBlue = Color(0xFF38BDF8); // Soft Azure
   static const Color accentEmerald = Color(0xFF10B981);
   static const Color lightBackground = Color(0xFFF8FAFC);

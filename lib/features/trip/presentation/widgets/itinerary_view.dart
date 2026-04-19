@@ -14,11 +14,7 @@ class ItineraryView extends StatefulWidget {
   final TripModel trip;
   final Function(List<DayData>) onUpdate;
 
-  const ItineraryView({
-    super.key,
-    required this.trip,
-    required this.onUpdate,
-  });
+  const ItineraryView({super.key, required this.trip, required this.onUpdate});
 
   @override
   State<ItineraryView> createState() => _ItineraryViewState();
@@ -60,27 +56,50 @@ class _ItineraryViewState extends State<ItineraryView> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('What kind of activities are you looking for?', 
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
+              Text(
+                'What kind of activities are you looking for?',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
               const Gap(12),
               TextField(
-                controller: promptCtrl,
+                stylusHandwritingEnabled: false,
+controller: promptCtrl,
                 maxLines: 3,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 decoration: InputDecoration(
-                  hintText: 'e.g. "Focus on local food and hidden gems," "Include more hiking," etc.',
+                  hintText:
+                      'e.g. "Focus on local food and hidden gems," "Include more hiking," etc.',
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlueAccent, foregroundColor: Colors.black),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.lightBlueAccent,
+                foregroundColor: Colors.black,
+              ),
               child: const Text('Generate'),
             ),
           ],
@@ -88,7 +107,7 @@ class _ItineraryViewState extends State<ItineraryView> {
       );
 
       if (confirmed != true) return;
-      
+
       shouldRetry = false; // Default to not retrying unless stopped
       setState(() => _isAiLoading = true);
       _aiClient = http.Client();
@@ -96,7 +115,7 @@ class _ItineraryViewState extends State<ItineraryView> {
       try {
         final result = await AiService.generateItinerary(
           destination: widget.trip.destination,
-          days: 3, 
+          days: 3,
           startDate: widget.trip.startDate,
           customPrompt: promptCtrl.text,
           client: _aiClient,
@@ -110,14 +129,19 @@ class _ItineraryViewState extends State<ItineraryView> {
             _itinerary = result;
             widget.onUpdate(_itinerary);
           });
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✨ Trip magic generated!')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('✨ Trip magic generated!')),
+          );
         } else {
           // If result is null, it might be due to cancellation or actual error
           if (_aiClient == null) {
-             shouldRetry = true; // Was cancelled/stopped, show dialog again
+            shouldRetry = true; // Was cancelled/stopped, show dialog again
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('🛡️ Quota limit reached or network error.'), backgroundColor: Colors.orange),
+              const SnackBar(
+                content: Text('🛡️ Quota limit reached or network error.'),
+                backgroundColor: Colors.orange,
+              ),
             );
           }
         }
@@ -167,60 +191,98 @@ class _ItineraryViewState extends State<ItineraryView> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: nameCtrl,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                stylusHandwritingEnabled: false,
+controller: nameCtrl,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Place Name',
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
               const Gap(12),
               TextField(
-                controller: timeCtrl,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                stylusHandwritingEnabled: false,
+controller: timeCtrl,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Time',
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
               const Gap(12),
               DropdownButtonFormField<String>(
                 value: type,
                 dropdownColor: Theme.of(context).colorScheme.surface,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Type',
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 items: ['Activity', 'Restaurant', 'Transport', 'Hotel', 'Other']
-                   .map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                    .toList(),
                 onChanged: (v) => setDialogState(() => type = v!),
               ),
               const Gap(12),
               TextField(
-                controller: notesCtrl,
+                stylusHandwritingEnabled: false,
+controller: notesCtrl,
                 maxLines: 2,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Notes',
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlueAccent, foregroundColor: Colors.black),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.lightBlueAccent,
+                foregroundColor: Colors.black,
+              ),
               child: const Text('Save Changes'),
             ),
           ],
@@ -241,6 +303,155 @@ class _ItineraryViewState extends State<ItineraryView> {
     }
   }
 
+  void _addPlace(int dayIndex) async {
+    final nameCtrl = TextEditingController();
+    final timeCtrl = TextEditingController();
+    final notesCtrl = TextEditingController();
+    String type = 'Activity';
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => InteractiveDialog(
+          title: 'Add New Place',
+          icon: Icons.add_location_alt_outlined,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                stylusHandwritingEnabled: false,
+controller: nameCtrl,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Where are we going?',
+                  filled: true,
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const Gap(12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      stylusHandwritingEnabled: false,
+controller: timeCtrl,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Time (e.g. 10:00 AM)',
+                        filled: true,
+                        fillColor: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.05),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Gap(12),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: type,
+                      dropdownColor: Theme.of(context).colorScheme.surface,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 13,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Category',
+                        filled: true,
+                        fillColor: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.05),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      items:
+                          [
+                                'Activity',
+                                'Restaurant',
+                                'Transport',
+                                'Hotel',
+                                'Other',
+                              ]
+                              .map(
+                                (t) =>
+                                    DropdownMenuItem(value: t, child: Text(t)),
+                              )
+                              .toList(),
+                      onChanged: (v) => setDialogState(() => type = v!),
+                    ),
+                  ),
+                ],
+              ),
+              const Gap(12),
+              TextField(
+                stylusHandwritingEnabled: false,
+controller: notesCtrl,
+                maxLines: 2,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Optional Notes',
+                  filled: true,
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.lightBlueAccent,
+                foregroundColor: Colors.black,
+              ),
+              child: const Text('Add to Plan'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed == true && nameCtrl.text.isNotEmpty) {
+      setState(() {
+        _itinerary[dayIndex].places.add(
+          PlaceData(
+            name: nameCtrl.text,
+            time: timeCtrl.text.isEmpty ? '--:--' : timeCtrl.text,
+            type: type,
+            notes: notesCtrl.text,
+          ),
+        );
+        widget.onUpdate(_itinerary);
+      });
+    }
+  }
+
   void _deletePlace(int dayIndex, int placeIndex) {
     setState(() {
       _itinerary[dayIndex].places.removeAt(placeIndex);
@@ -254,12 +465,12 @@ class _ItineraryViewState extends State<ItineraryView> {
       children: [
         _buildDayPicker(),
         Expanded(
-          child: _itinerary.isEmpty 
-            ? _buildEmptyState()
-            : _buildDayPlaces(
-                _selectedDayIndex.clamp(0, _itinerary.length - 1), 
-                _itinerary[_selectedDayIndex.clamp(0, _itinerary.length - 1)]
-              ),
+          child: _itinerary.isEmpty
+              ? _buildEmptyState()
+              : _buildDayPlaces(
+                  _selectedDayIndex.clamp(0, _itinerary.length - 1),
+                  _itinerary[_selectedDayIndex.clamp(0, _itinerary.length - 1)],
+                ),
         ),
       ],
     );
@@ -281,29 +492,67 @@ class _ItineraryViewState extends State<ItineraryView> {
                 onTap: () => setState(() => _selectedDayIndex = entry.key),
                 child: Container(
                   margin: const EdgeInsets.only(right: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.lightBlueAccent : (isDark ? Colors.white.withOpacity(0.05) : Colors.white),
+                    color: isSelected
+                        ? Colors.lightBlueAccent
+                        : (isDark
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.white),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: isSelected ? Colors.lightBlueAccent : Colors.grey.withOpacity(0.3)),
-                    boxShadow: !isDark && isSelected ? [BoxShadow(color: Colors.lightBlueAccent.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))] : [],
+                    border: Border.all(
+                      color: isSelected
+                          ? Colors.lightBlueAccent
+                          : Colors.grey.withOpacity(0.3),
+                    ),
+                    boxShadow: !isDark && isSelected
+                        ? [
+                            BoxShadow(
+                              color: Colors.lightBlueAccent.withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : [],
                   ),
                   child: Row(
                     children: [
                       Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Day ${entry.key + 1}', 
-                            style: TextStyle(color: isSelected ? (isDark ? Colors.black : Colors.white) : Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13)),
-                          Text(DateFormat('MMM dd').format(entry.value.date), 
-                            style: TextStyle(color: isSelected ? (isDark ? Colors.black87 : Colors.white70) : Colors.grey, fontSize: 10)),
+                          Text(
+                            'Day ${entry.key + 1}',
+                            style: TextStyle(
+                              color: isSelected
+                                  ? (isDark ? Colors.black : Colors.white)
+                                  : Theme.of(context).colorScheme.onSurface,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            DateFormat('MMM dd').format(entry.value.date),
+                            style: TextStyle(
+                              color: isSelected
+                                  ? (isDark ? Colors.black87 : Colors.white70)
+                                  : Colors.grey,
+                              fontSize: 10,
+                            ),
+                          ),
                         ],
                       ),
                       if (isSelected) ...[
                         const Gap(8),
                         GestureDetector(
                           onTap: () => _deleteDay(entry.key),
-                          child: Icon(Icons.close, size: 16, color: isDark ? Colors.black54 : Colors.white70),
+                          child: Icon(
+                            Icons.close,
+                            size: 16,
+                            color: isDark ? Colors.black54 : Colors.white70,
+                          ),
                         ),
                       ],
                     ],
@@ -313,7 +562,44 @@ class _ItineraryViewState extends State<ItineraryView> {
             }),
             _buildActionIcon(Icons.add_circle_outline, 'Add Day', _addDay),
             const Gap(12),
+            _buildManualAddButton(),
+            const Gap(12),
             _buildAutoFillButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildManualAddButton() {
+    return GestureDetector(
+      onTap: () => _addPlace(_selectedDayIndex.clamp(0, _itinerary.length - 1)),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.lightBlueAccent.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+            color: Colors.lightBlueAccent.withValues(alpha: 0.2),
+          ),
+        ),
+        child: const Row(
+          children: [
+            Icon(
+              Icons.add_location_alt_outlined,
+              color: Colors.lightBlueAccent,
+              size: 18,
+            ),
+            Gap(10),
+            Text(
+              'Add Place',
+              style: TextStyle(
+                color: Colors.lightBlueAccent,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
           ],
         ),
       ),
@@ -330,12 +616,23 @@ class _ItineraryViewState extends State<ItineraryView> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(4), 
-              decoration: BoxDecoration(color: Colors.lightBlueAccent.withOpacity(0.1), shape: BoxShape.circle),
-              child: Icon(icon, color: Colors.lightBlueAccent, size: 20), 
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.lightBlueAccent.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: Colors.lightBlueAccent, size: 20),
             ),
             const Gap(2),
-            Text(label, style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 9, fontWeight: FontWeight.bold, height: 1.1)),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.lightBlueAccent,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                height: 1.1,
+              ),
+            ),
           ],
         ),
       ),
@@ -349,30 +646,41 @@ class _ItineraryViewState extends State<ItineraryView> {
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
-          color: _isAiLoading 
-              ? Colors.red.withValues(alpha: 0.1) 
+          color: _isAiLoading
+              ? Colors.red.withValues(alpha: 0.1)
               : Colors.lightBlueAccent.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(30),
           border: Border.all(
-            color: _isAiLoading 
-                ? Colors.red.withValues(alpha: 0.2) 
-                : Colors.lightBlueAccent.withValues(alpha: 0.2)
+            color: _isAiLoading
+                ? Colors.red.withValues(alpha: 0.2)
+                : Colors.lightBlueAccent.withValues(alpha: 0.2),
           ),
         ),
         child: Row(
           children: [
             if (_isAiLoading)
-              const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red))
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.red,
+                ),
+              )
             else
-              const Icon(Icons.auto_awesome, color: Colors.lightBlueAccent, size: 18),
+              const Icon(
+                Icons.auto_awesome,
+                color: Colors.lightBlueAccent,
+                size: 18,
+              ),
             const Gap(10),
             Text(
-              _isAiLoading ? 'Stop Generation' : 'Auto-Fill', 
+              _isAiLoading ? 'Stop Generation' : 'Auto-Fill',
               style: TextStyle(
-                color: _isAiLoading ? Colors.red : Colors.lightBlueAccent, 
-                fontWeight: FontWeight.bold, 
-                fontSize: 14
-              )
+                color: _isAiLoading ? Colors.red : Colors.lightBlueAccent,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
           ],
         ),
@@ -393,10 +701,22 @@ class _ItineraryViewState extends State<ItineraryView> {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
-            boxShadow: !isDark ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))] : [],
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withOpacity(0.1),
+            ),
+            boxShadow: !isDark
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
           ),
           child: Row(
+            crossAxisAlignment:
+                CrossAxisAlignment.center, // Center contents vertically
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
@@ -404,40 +724,81 @@ class _ItineraryViewState extends State<ItineraryView> {
                   color: Colors.lightBlueAccent.withOpacity(0.05),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(_getIconForPlace(place.type), color: Colors.lightBlueAccent, size: 24),
+                child: Icon(
+                  _getIconForPlace(place.type),
+                  color: Colors.lightBlueAccent,
+                  size: 24,
+                ),
               ),
-              const Gap(16),
+              const Gap(10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(place.name, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
+                    SizedBox(
+                      height:
+                          24, // Locked height for title baseline consistency
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              place.name,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18, // Increased font size
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const Gap(8),
+                          Text(
+                            place.time,
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.7),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     if (place.notes?.isNotEmpty ?? false) ...[
-                      const Gap(2),
-                      Text(place.notes!, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+                      const Gap(5), // Added gap for better readability
+                      Text(
+                        place.notes!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
-                    const Gap(4),
-                    Text(place.type, style: const TextStyle(fontSize: 12, color: Colors.lightBlueAccent, fontWeight: FontWeight.bold)),
+                    const Gap(1),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          place.type,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.lightBlueAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        _buildMoreButton(dayIndex, index),
+                      ],
+                    ),
                   ],
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(place.time, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontWeight: FontWeight.bold)),
-                  PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert, size: 18, color: Colors.grey.withOpacity(0.5)),
-                    padding: EdgeInsets.zero,
-                    onSelected: (val) {
-                      if (val == 'edit') _editPlace(dayIndex, index);
-                      if (val == 'delete') _deletePlace(dayIndex, index);
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit_outlined, size: 18), Gap(8), Text('Edit')])),
-                      const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_outline, color: Colors.red, size: 18), Gap(8), Text('Delete', style: TextStyle(color: Colors.red))])),
-                    ],
-                  ),
-                ],
               ),
             ],
           ),
@@ -446,13 +807,56 @@ class _ItineraryViewState extends State<ItineraryView> {
     );
   }
 
+  Widget _buildMoreButton(int dayIndex, int placeIndex) {
+    return PopupMenuButton<String>(
+      icon: Icon(
+        Icons.more_horiz,
+        size: 18,
+        color: Colors.grey.withOpacity(0.5),
+      ),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+      onSelected: (val) {
+        if (val == 'edit') _editPlace(dayIndex, placeIndex);
+        if (val == 'delete') _deletePlace(dayIndex, placeIndex);
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'edit',
+          child: Row(
+            children: [
+              Icon(Icons.edit_outlined, size: 18),
+              Gap(8),
+              Text('Edit'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline, color: Colors.red, size: 18),
+              Gap(8),
+              Text('Delete', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   IconData _getIconForPlace(String type) {
     switch (type) {
-      case 'Activity': return Icons.explore_outlined;
-      case 'Restaurant': return Icons.restaurant_outlined;
-      case 'Transport': return Icons.directions_bus_outlined;
-      case 'Hotel': return Icons.hotel_outlined;
-      default: return Icons.location_on_outlined;
+      case 'Activity':
+        return Icons.explore_outlined;
+      case 'Restaurant':
+        return Icons.restaurant_outlined;
+      case 'Transport':
+        return Icons.directions_bus_outlined;
+      case 'Hotel':
+        return Icons.hotel_outlined;
+      default:
+        return Icons.location_on_outlined;
     }
   }
 
@@ -461,11 +865,19 @@ class _ItineraryViewState extends State<ItineraryView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.map_outlined, size: 64, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05)),
+          Icon(
+            Icons.map_outlined,
+            size: 64,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+          ),
           const Gap(24),
           Text(
             'Start planning your adventure day by day.',
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3), fontSize: 16, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
             textAlign: TextAlign.center,
           ),
         ],

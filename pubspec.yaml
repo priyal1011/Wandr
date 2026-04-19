@@ -116,6 +116,7 @@ flutter:
   assets:
     - .env
     - assets/images/
+    - assets/images/onboarding/
 
   shaders:
     - assets/shaders/pincushion.glsl

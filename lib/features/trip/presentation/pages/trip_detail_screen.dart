@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +10,7 @@ import 'package:wandr/features/trip/presentation/cubit/trip_state.dart';
 import 'package:wandr/core/in_memory_store.dart';
 import 'package:wandr/main.dart';
 import 'package:wandr/models/trip_model.dart';
+import 'package:wandr/core/widgets/wandr_image.dart';
 import 'package:wandr/features/trip/presentation/widgets/itinerary_view.dart';
 import 'package:wandr/features/trip/presentation/widgets/expenses_view.dart';
 import 'package:wandr/features/trip/presentation/widgets/memories_view.dart';
@@ -64,102 +64,113 @@ class _TripDetailScreenState extends State<TripDetailScreen> with SingleTickerPr
           
           if (state is TripLoaded) {
             final trip = state.trip;
+            final screenHeight = MediaQuery.of(context).size.height;
+            final screenWidth = MediaQuery.of(context).size.width;
             
-            return ListenableBuilder(
-              listenable: getIt<InMemoryStore>(),
-              builder: (context, _) {
-                 // We still listen to store for global edits (like name change in Edit Screen)
-                 context.read<TripCubit>().refreshFromStore();
-                 
-                 return Scaffold(
-                  body: NestedScrollView(
-                    headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                      SliverAppBar(
-                        expandedHeight: 320,
-                        pinned: true,
-                        backgroundColor: Theme.of(context).colorScheme.surface,
-                        leading: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-                          onPressed: () => context.pop(),
-                        ),
-                        actions: [
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined, color: Colors.white),
-                            onPressed: () => context.push('/edit-trip/${trip.id}'),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.white),
-                            onPressed: () => _confirmDelete(context),
-                          ),
-                          const Gap(8),
-                        ],
-                        flexibleSpace: FlexibleSpaceBar(
-                          background: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              _buildHeroImage(trip),
-                              _buildHeroGradient(),
-                              _buildHeroTitle(trip),
-                            ],
-                          ),
-                        ),
+            // Safety: Check if trip still exists in store (prevents deletion crashes)
+            final exists = getIt<InMemoryStore>().trips.any((t) => t.id == trip.id);
+            if (!exists) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
+            return Scaffold(
+              body: NestedScrollView(
+                headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                  SliverAppBar(
+                    expandedHeight: screenHeight * 0.35, // Adaptive height
+                    pinned: true,
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    leading: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                      onPressed: () => context.pop(),
+                    ),
+                    actions: [
+                      ListenableBuilder(
+                        listenable: getIt<InMemoryStore>(),
+                        builder: (context, _) {
+                          if (!getIt<InMemoryStore>().isSyncingCloud) return const SizedBox.shrink();
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Hero(
+                              tag: 'sync_indicator',
+                              child: Icon(Icons.cloud_sync_outlined, size: 20, color: Colors.lightBlueAccent),
+                            ),
+                          ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 2.seconds);
+                        },
                       ),
-                      SliverPersistentHeader(
-                        pinned: true,
-                        delegate: _SliverTabDelegate(
-                          TabBar(
-                            controller: _tabController,
-                            onTap: (index) => context.read<TripCubit>().updateTabIndex(index),
-                            indicatorColor: Colors.lightBlueAccent,
-                            indicatorWeight: 4,
-                            labelColor: Colors.lightBlueAccent,
-                            unselectedLabelColor: Colors.grey,
-                            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                            tabs: const [
-                              Tab(icon: Icon(Icons.calendar_month_outlined, size: 20), text: 'Itinerary'),
-                              Tab(icon: Icon(Icons.payments_outlined, size: 20), text: 'Budget'),
-                              Tab(icon: Icon(Icons.photo_library_outlined, size: 20), text: 'Memories'),
-                              Tab(icon: Icon(Icons.map_outlined, size: 20), text: 'Map'),
-                            ],
-                          ),
-                        ),
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, color: Colors.white),
+                        onPressed: () => context.push('/edit-trip/${trip.id}'),
                       ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.white),
+                        onPressed: () => _confirmDelete(context),
+                      ),
+                      const Gap(8),
                     ],
-                    body: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        ItineraryView(
-                          trip: trip,
-                          onUpdate: (data) => context.read<TripCubit>().updateItinerary(data),
-                        ),
-                        ExpensesView(
-                          key: _expensesKey,
-                          trip: trip,
-                          onUpdate: (data) => context.read<TripCubit>().updateExpenses(data),
-                        ),
-                        MemoriesView(
-                          key: _memoriesKey,
-                          trip: trip,
-                          onUpdate: (data) => context.read<TripCubit>().updatePhotos(data),
-                        ),
-                        TripMapView(trip: trip),
-                      ],
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          _buildHeroImage(trip),
+                          _buildHeroGradient(),
+                          _buildHeroTitle(trip, screenWidth),
+                        ],
+                      ),
                     ),
                   ),
-                  floatingActionButton: Padding(
-                    padding: const EdgeInsets.all(0), // Removed bottom: 30 to fix positioning
-                    child: state.activeTabIndex != 2
-                        ? null 
-                        : FloatingActionButton.extended(
-                            onPressed: () => _memoriesKey.currentState?.addPhoto(),
-                            backgroundColor: Colors.lightBlueAccent,
-                            foregroundColor: Colors.black,
-                            icon: const Icon(Icons.add_a_photo_outlined),
-                            label: const Text('Add Photo'),
-                          ).animate().scale(),
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _SliverTabDelegate(
+                      TabBar(
+                        controller: _tabController,
+                        onTap: (index) => context.read<TripCubit>().updateTabIndex(index),
+                        indicatorColor: Colors.lightBlueAccent,
+                        indicatorWeight: 4,
+                        labelColor: Colors.lightBlueAccent,
+                        unselectedLabelColor: Colors.grey,
+                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11), // Smaller for legacy screens
+                        tabs: const [
+                          Tab(icon: Icon(Icons.calendar_month_outlined, size: 18), text: 'Plan'), // Simplified for width
+                          Tab(icon: Icon(Icons.payments_outlined, size: 18), text: 'Budget'),
+                          Tab(icon: Icon(Icons.photo_library_outlined, size: 18), text: 'Diary'),
+                          Tab(icon: Icon(Icons.map_outlined, size: 18), text: 'Map'),
+                        ],
+                      ),
+                    ),
                   ),
-                );
-              },
+                ],
+                body: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    ItineraryView(
+                      trip: trip,
+                      onUpdate: (data) => context.read<TripCubit>().updateItinerary(data),
+                    ),
+                    ExpensesView(
+                      key: _expensesKey,
+                      trip: trip,
+                      onUpdate: (data) => context.read<TripCubit>().updateExpenses(data),
+                    ),
+                    MemoriesView(
+                      key: _memoriesKey,
+                      trip: trip,
+                      onUpdate: (data) => context.read<TripCubit>().updatePhotos(data),
+                    ),
+                    TripMapView(trip: trip),
+                  ],
+                ),
+              ),
+              floatingActionButton: Padding(
+                padding: const EdgeInsets.all(0),
+                child: state.activeTabIndex != 2
+                    ? null 
+                    : FloatingActionButton.extended(
+                        onPressed: () => _memoriesKey.currentState?.addPhoto(),
+                        backgroundColor: Colors.lightBlueAccent,
+                        foregroundColor: Colors.black,
+                        icon: const Icon(Icons.add_a_photo_outlined),
+                        label: const Text('Add Photo'),
+                      ).animate().scale(),
+              ),
             );
           }
           
@@ -170,11 +181,9 @@ class _TripDetailScreenState extends State<TripDetailScreen> with SingleTickerPr
   }
 
   Widget _buildHeroImage(TripModel trip) {
-    return Hero(
-      tag: 'trip_cover_${trip.id}',
-      child: trip.coverPhoto != null && trip.coverPhoto!.startsWith('http')
-          ? Image.network(trip.coverPhoto!, fit: BoxFit.cover)
-          : (trip.coverPhoto != null ? Image.file(File(trip.coverPhoto!), fit: BoxFit.cover) : Container(color: Colors.black)),
+    return WandrImage(
+      source: trip.coverPhoto,
+      heroTag: 'trip_cover_${trip.id}',
     );
   }
 
@@ -190,15 +199,31 @@ class _TripDetailScreenState extends State<TripDetailScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildHeroTitle(TripModel trip) {
+  Widget _buildHeroTitle(TripModel trip, double screenWidth) {
     return Positioned(
       bottom: 30,
       left: 24,
       right: 24,
-      child: Text(
-        trip.name,
-        style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
-      ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2),
+      child: ListenableBuilder(
+        listenable: getIt<InMemoryStore>(),
+        builder: (context, _) {
+          // Sync state if returned from edit
+          context.read<TripCubit>().refreshFromStore();
+          final state = context.read<TripCubit>().state;
+          final updatedName = state is TripLoaded ? state.trip.name : trip.name;
+          
+          return Text(
+            updatedName,
+            style: TextStyle(
+              color: Colors.white, 
+              fontSize: screenWidth < 360 ? 28 : 36, // Scaled for width
+              fontWeight: FontWeight.bold,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2);
+        },
+      ),
     );
   }
 
@@ -212,9 +237,11 @@ class _TripDetailScreenState extends State<TripDetailScreen> with SingleTickerPr
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
+              Navigator.pop(context); // Unmount UI first to trigger map dispose()
+              // Cool-down period to ensure background emitters are dead
+              await Future.delayed(const Duration(milliseconds: 150));
               cubit.deleteTrip();
-              Navigator.pop(context);
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),

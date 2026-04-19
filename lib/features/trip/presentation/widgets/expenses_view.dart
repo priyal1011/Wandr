@@ -53,7 +53,8 @@ class ExpensesViewState extends State<ExpensesView> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: nameCtrl,
+                stylusHandwritingEnabled: false,
+controller: nameCtrl,
                 style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                 decoration: InputDecoration(
                   labelText: 'What did you buy?',
@@ -69,7 +70,8 @@ class ExpensesViewState extends State<ExpensesView> {
                   Expanded(
                     flex: 2,
                     child: TextField(
-                      controller: amountCtrl,
+                      stylusHandwritingEnabled: false,
+controller: amountCtrl,
                       keyboardType: TextInputType.number,
                       style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                       decoration: InputDecoration(
@@ -217,7 +219,8 @@ class ExpensesViewState extends State<ExpensesView> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: nameCtrl,
+                stylusHandwritingEnabled: false,
+controller: nameCtrl,
                 style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                 decoration: InputDecoration(
                   labelText: 'What did you buy?',
@@ -232,7 +235,8 @@ class ExpensesViewState extends State<ExpensesView> {
                   Expanded(
                     flex: 2,
                     child: TextField(
-                      controller: amountCtrl,
+                      stylusHandwritingEnabled: false,
+controller: amountCtrl,
                       keyboardType: TextInputType.number,
                       style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                       decoration: InputDecoration(
@@ -589,27 +593,31 @@ class ExpensesViewState extends State<ExpensesView> {
 
   Widget _buildEmptyState() {
     return LayoutBuilder(
-      builder: (context, constraints) => SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Container(
-          height: constraints.maxHeight > 0 ? constraints.maxHeight : 200,
-          alignment: Alignment.center,
+      builder: (context, constraints) {
+        final hasSpace = constraints.maxHeight > 100;
+        return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
+              Icon(
+                Icons.receipt_long_outlined,
+                size: hasSpace ? 64 : 32, // Adaptive size
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+              ),
+              const Gap(16),
               Text(
                 'No expenses recorded yet.',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.15),
-                  fontSize: 16,
+                  fontSize: hasSpace ? 16 : 14,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

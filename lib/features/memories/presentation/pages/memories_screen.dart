@@ -109,7 +109,8 @@ class _MemoriesScreenState extends State<MemoriesScreen> {
               ),
               const Gap(16),
               TextField(
-                controller: tripNameCtrl,
+                stylusHandwritingEnabled: false,
+controller: tripNameCtrl,
                 decoration: InputDecoration(
                   labelText: 'Trip Name',
                   hintText: 'e.g. Summer in Tokyo',
@@ -118,7 +119,8 @@ class _MemoriesScreenState extends State<MemoriesScreen> {
               ),
               const Gap(16),
               TextField(
-                controller: captionCtrl,
+                stylusHandwritingEnabled: false,
+controller: captionCtrl,
                 decoration: InputDecoration(
                   labelText: 'Caption (Optional)',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
