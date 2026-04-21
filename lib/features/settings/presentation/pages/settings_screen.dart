@@ -116,7 +116,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: 'Privacy & Security',
             subtitle: 'Change password',
             icon: Icons.lock_outline,
-            // onTap: () => context.push('/settings/change-password'),
+            onTap: () => context.push('/settings/privacy-security'),
           ),
           const Gap(32),
           ElevatedButton.icon(

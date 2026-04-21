@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fluttermoji/fluttermoji.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../core/services/cloudinary_service.dart';
@@ -94,18 +96,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // 2. Update Local Store
       store.currentUser = UserModel(
         id: currentUser.id,
-        name: _nameController.text,
-        email: _emailController.text,
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
         password: currentUser.password,
         photoUrl: finalPhotoUrl,
         fluttermojiCode: currentUser.fluttermojiCode,
       );
       await store.saveToDisk();
 
-      // 3. Sync to Firestore
+      // 3. Sync to Firestore using verified Firebase UID
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null || uid.isEmpty) {
+         throw Exception('Critical error: No active Firebase session found.');
+      }
+
       await FirebaseFirestore.instance
           .collection('users')
-          .doc(currentUser.id)
+          .doc(uid)
           .update({
             'name': _nameController.text.trim(),
             'email': _emailController.text.trim(),
@@ -130,6 +137,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _getAvatarWidget() {
+    final store = getIt<InMemoryStore>();
+    final user = store.currentUser;
+
     if (_currentPhoto != null && _currentPhoto!.isNotEmpty) {
       final isNetwork = _currentPhoto!.startsWith('http');
       return CircleAvatar(
@@ -155,9 +165,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
     }
 
-    return FluttermojiCircleAvatar(
+    if (user?.fluttermojiCode != null && user!.fluttermojiCode!.isNotEmpty) {
+      final svgString = FluttermojiFunctions().decodeFluttermojifromString(user.fluttermojiCode!);
+      return CircleAvatar(
+        radius: 70,
+        backgroundColor: AppTheme.accentCyan.withValues(alpha: 0.1),
+        child: ClipOval(
+          child: SvgPicture.string(
+            svgString,
+            width: 140,
+            height: 140,
+          ),
+        ),
+      );
+    }
+
+    return CircleAvatar(
       radius: 70,
       backgroundColor: AppTheme.accentCyan.withValues(alpha: 0.1),
+      child: Icon(
+        Icons.person_outline,
+        size: 70,
+        color: AppTheme.accentCyan,
+      ),
     );
   }
 

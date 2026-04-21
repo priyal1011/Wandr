@@ -5,7 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 import 'package:fluttermoji/fluttermoji.dart';
+
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
 import '../../../../models/trip_model.dart';
@@ -117,18 +120,32 @@ class _HomeAppBar extends StatelessWidget {
       return CircleAvatar(radius: 20, backgroundImage: image);
     }
 
-    return FluttermojiCircleAvatar(
+    if (user?.fluttermojiCode != null && user!.fluttermojiCode!.isNotEmpty) {
+      final svgString = FluttermojiFunctions().decodeFluttermojifromString(user!.fluttermojiCode!);
+      return ClipOval(
+        child: SvgPicture.string(
+          svgString,
+          width: 40,
+          height: 40,
+        ),
+      );
+    }
+
+    return CircleAvatar(
       radius: 20,
-      backgroundColor: Theme.of(
-        context,
-      ).colorScheme.primary.withValues(alpha: 0.1),
+      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+      child: Icon(
+        Icons.person_outline,
+        color: Theme.of(context).colorScheme.primary,
+        size: 20,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 140,
       floating: true,
       pinned: true,
       backgroundColor: Colors.transparent,
@@ -136,31 +153,40 @@ class _HomeAppBar extends StatelessWidget {
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: false,
-        titlePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        titlePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hello, ${user?.name ?? 'Explorer'}',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Hello, ${user?.name ?? 'Explorer'}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      height: 1.1,
+                      fontSize: 22,
+                    ),
+                    softWrap: true,
                   ),
-                ),
-                Text(
-                  'WANDR'.toUpperCase(),
-                  style: GoogleFonts.plusJakartaSans(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 4,
+                  const Gap(2),
+                  Text(
+                    'WANDR'.toUpperCase(),
+                    style: GoogleFonts.plusJakartaSans(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 4,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            const Gap(12),
             GestureDetector(
               onTap: () => context.push('/settings'),
               child: Hero(
@@ -234,7 +260,7 @@ class _UpcomingHorizontalList extends StatelessWidget {
           return GestureDetector(
             onTap: () => context.push('/trip/${trip.id}'),
             child: Hero(
-              tag: 'trip_cover_${trip.id}',
+              tag: 'home_upcoming_${trip.id}',
               child: Container(
                 width: 280,
                 clipBehavior: Clip.antiAlias,
@@ -352,6 +378,7 @@ class _PastJourneysCarousel extends StatelessWidget {
         separatorBuilder: (context, index) => const Gap(12),
         itemBuilder: (context, index) {
           final trip = trips[index];
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           return GestureDetector(
             onTap: () => context.push('/trip/${trip.id}'),
             child: Container(
@@ -362,11 +389,12 @@ class _PastJourneysCarousel extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: isDark ? 0.05 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
+                border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
               ),
               child: Row(
                 children: [
@@ -408,11 +436,11 @@ class _PastJourneysCarousel extends StatelessWidget {
                         : Container(
                             width: 80,
                             height: 80,
-                            color: Colors.grey.shade300,
-                            child: const Icon(
+                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            child: Icon(
                               Icons.image_outlined,
                               size: 20,
-                              color: Colors.grey,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                             ),
                           ),
                   ),

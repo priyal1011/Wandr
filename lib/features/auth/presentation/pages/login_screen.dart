@@ -63,6 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   'traveler@wandr.com',
               password: '', // Password handled by Firebase Auth
               photoUrl: data?['photoUrl']?.toString(),
+              fluttermojiCode: data?['fluttermojiCode']?.toString(),
             );
           } else {
             getIt<InMemoryStore>().currentUser = UserModel(
@@ -77,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
           await getIt<InMemoryStore>().loadFromDisk();
 
           // Emit success to trigger router redirection
-          getIt<AuthCubit>().setAuthenticated();
+          await getIt<AuthCubit>().setAuthenticated();
 
           if (mounted) context.go('/');
         }

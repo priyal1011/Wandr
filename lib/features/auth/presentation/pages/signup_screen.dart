@@ -51,7 +51,6 @@ class _SignupScreenState extends State<SignupScreen> {
             'uid': user.uid,
             'name': _nameController.text.trim(),
             'email': _emailController.text.trim(),
-            'photoUrl': 'https://i.pravatar.cc/150?u=${user.uid}',
             'createdAt': FieldValue.serverTimestamp(),
           });
 
@@ -64,7 +63,7 @@ class _SignupScreenState extends State<SignupScreen> {
           getIt<InMemoryStore>().hasSeenOnboarding = true;
           await getIt<InMemoryStore>().loadFromDisk();
 
-          getIt<AuthCubit>().setAuthenticated();
+          await getIt<AuthCubit>().setAuthenticated();
 
           if (mounted) context.go('/');
         }

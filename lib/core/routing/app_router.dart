@@ -20,6 +20,8 @@ import '../../features/auth/presentation/pages/signup_screen.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../models/photo_model.dart';
 
+import '../../features/settings/presentation/pages/privacy_security_screen.dart';
+
 final appRouter = GoRouter(
   initialLocation: '/splash',
   refreshListenable: GoRouterRefreshStream(getIt<AuthCubit>().stream),
@@ -182,6 +184,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/settings/avatar-studio',
       builder: (context, state) => const AvatarStudioScreen(),
+    ),
+    GoRoute(
+      path: '/settings/privacy-security',
+      builder: (context, state) => const PrivacySecurityScreen(),
     ),
   ],
 );

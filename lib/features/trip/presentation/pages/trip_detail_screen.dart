@@ -252,18 +252,24 @@ class _TripDetailScreenState extends State<TripDetailScreen> with SingleTickerPr
 
   Widget _buildSkeletonLoading() {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Skeletonizer(
         enabled: true,
         child: Column(
           children: [
-            Container(height: 320, color: Colors.grey.shade900),
+            Container(height: 320, color: Theme.of(context).colorScheme.surfaceContainerHighest),
             const Gap(16),
             Expanded(
               child: ListView.builder(
                 itemCount: 4, 
                 itemBuilder: (context, i) => ListTile(
-                  title: Container(height: 100, decoration: BoxDecoration(color: Colors.grey.shade900, borderRadius: BorderRadius.circular(24))),
+                  title: Container(
+                    height: 100, 
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest, 
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
                 ),
               ),
             ),

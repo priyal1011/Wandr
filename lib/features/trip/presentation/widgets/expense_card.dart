@@ -49,10 +49,10 @@ class ExpenseCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(
-                  height: 24, // Precise height to lock baseline
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2.0),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Text(
@@ -60,19 +60,19 @@ class ExpenseCard extends StatelessWidget {
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurface,
                             fontWeight: FontWeight.bold,
-                            fontSize: 18, // High-visibility font
+                            fontSize: 18,
                           ),
-                          maxLines: 1,
+                          maxLines: 2, // Allow wrapping if name is long
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Gap(8),
+                      const Gap(12),
                       Text(
                         '$currency${expense.amount.toStringAsFixed(0)}',
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.w900,
-                          fontSize: 20, // Bold price exposure
+                          fontSize: 20,
                         ),
                       ),
                     ],

@@ -296,10 +296,13 @@ controller: _nameController,
                   labelText: 'Adventure Name',
                   hintText: 'e.g. Kyoto Explorer 2026',
                   prefixIcon: const Icon(Icons.drive_file_rename_outline),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Theme.of(context).dividerColor)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 validator: (v) => (v == null || v.isEmpty)
                     ? 'Enter a name for your journey.'
                     : null,
@@ -312,10 +315,13 @@ controller: _destinationController,
                 decoration: InputDecoration(
                   labelText: 'Destination',
                   prefixIcon: const Icon(Icons.explore_outlined),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Theme.of(context).dividerColor)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 validator: (v) =>
                     (v == null || v.isEmpty) ? 'Where are we going?' : null,
                 

@@ -29,9 +29,9 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: accentCyan,
-        primary: accentCyan,
-        secondary: accentBlue,
+        seedColor: const Color.fromARGB(255, 5, 207, 230),
+        primary: const Color.fromARGB(255, 5, 207, 230),
+        secondary: const Color.fromARGB(255, 48, 172, 224),
         surface: Colors.white,
         onSurface: darkBackground,
       ),
@@ -39,6 +39,7 @@ class AppTheme {
       textTheme: _buildTextTheme(Brightness.light),
       appBarTheme: _buildAppBarTheme(Brightness.light),
       navigationBarTheme: _buildNavBarTheme(Brightness.light),
+      inputDecorationTheme: _buildInputDecorationTheme(Brightness.light),
     );
   }
 
@@ -48,9 +49,9 @@ class AppTheme {
       brightness: Brightness.dark,
       colorScheme: ColorScheme.fromSeed(
         brightness: Brightness.dark,
-        seedColor: accentCyan,
-        primary: accentCyan,
-        secondary: accentBlue,
+        seedColor: const Color.fromARGB(255, 5, 207, 230),
+        primary: const Color.fromARGB(255, 5, 207, 230),
+        secondary: const Color.fromARGB(255, 48, 172, 224),
         surface: surfaceGrey,
         onSurface: Colors.white,
       ),
@@ -58,6 +59,43 @@ class AppTheme {
       textTheme: _buildTextTheme(Brightness.dark),
       appBarTheme: _buildAppBarTheme(Brightness.dark),
       navigationBarTheme: _buildNavBarTheme(Brightness.dark),
+      inputDecorationTheme: _buildInputDecorationTheme(Brightness.dark),
+    );
+  }
+
+  static InputDecorationTheme _buildInputDecorationTheme(
+    Brightness brightness,
+  ) {
+    final isDark = brightness == Brightness.dark;
+    final primaryColor = accentCyan;
+
+    return InputDecorationTheme(
+      filled: true,
+      fillColor: isDark
+          ? Colors.white.withValues(alpha: 0.03)
+          : Colors.black.withValues(alpha: 0.03),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20),
+        borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.black12),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20),
+        borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.black12),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20),
+        borderSide: BorderSide(color: primaryColor, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+      ),
+      labelStyle: TextStyle(
+        color: isDark ? Colors.white70 : Colors.black87,
+        fontWeight: FontWeight.w500,
+      ),
+      prefixIconColor: primaryColor,
     );
   }
 

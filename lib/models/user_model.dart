@@ -18,13 +18,14 @@ class UserModel {
   UserModel copyWith({
     String? name,
     String? email,
+    String? password,
     String? photoUrl,
     String? fluttermojiCode,
   }) => UserModel(
     id: id,
     name: name ?? this.name,
     email: email ?? this.email,
-    password: password,
+    password: password ?? this.password,
     photoUrl: photoUrl ?? this.photoUrl,
     fluttermojiCode: fluttermojiCode ?? this.fluttermojiCode,
   );

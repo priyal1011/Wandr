@@ -166,22 +166,20 @@ class _NavItem extends StatelessWidget {
               icon,
               color: isSelected
                   ? Theme.of(context).colorScheme.primary
-                  : Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.5),
-              size: 26,
+                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+              size: 24,
             ),
-            if (isSelected) ...[
-              const Gap(4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+            const Gap(2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
-            ],
+            ),
           ],
         ),
       ),

@@ -36,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen> {
         systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -47,6 +47,8 @@ class _SplashScreenState extends State<SplashScreen> {
                 child: Image.asset(
                   isDark ? 'assets/images/logo_dark.png' : 'assets/images/logo.png',
                   width: 320,
+                  color: isDark ? null : Theme.of(context).colorScheme.primary,
+                  colorBlendMode: isDark ? null : BlendMode.srcIn,
                 ),
               )
               .animate()
