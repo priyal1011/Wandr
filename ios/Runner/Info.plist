@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Wandr needs access to your location to show your progress on the trip map.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Wandr needs access to your gallery to save and share your travel memories.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Wandr needs camera access to capture moments directly into your itinerary.</string>
 </dict>
 </plist>

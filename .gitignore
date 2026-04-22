@@ -56,5 +56,8 @@ ios/Runner/GoogleService-Info.plist
 # OS
 *.DS_Store
 
+# Security - Secrets (DON'T REMOVE)
+.env
+
 # Keep pubspec.lock
 !pubspec.lock

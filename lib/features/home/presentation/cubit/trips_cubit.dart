@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
 import 'package:equatable/equatable.dart';
+import '../../../../models/trip_model.dart';
 
 abstract class TripsState extends Equatable {
   @override
@@ -64,7 +65,11 @@ class TripsCubit extends Cubit<TripsState> {
 
       // Computations
       final pastTripsCount = allTrips.where((t) => t.endDate.isBefore(now)).length;
-      final placesVisitedCount = store.places.length;
+      final placesVisitedCount = allTrips.where((t) => t.endDate.isBefore(now)).fold(0, (sum, t) {
+         final itinerary = t.itinerary;
+         if (itinerary == null) return sum;
+         return sum + itinerary.fold(0, (s, d) => s + d.places.length);
+      });
       final totalPhotosCount = store.photos.length;
 
       // Filter
@@ -100,13 +105,11 @@ class TripsCubit extends Cubit<TripsState> {
     }
   }
 
-  void deleteTrip(String tripId) {
+  Future<void> deleteTrip(String tripId) async {
     if (state is TripsLoaded) {
       final store = getIt<InMemoryStore>();
-      store.trips.removeWhere((t) => t.id == tripId);
-      store.saveToDisk();
-      
-      loadTrips(); // Reload with defaults
+      await store.deleteTrip(tripId);
+      loadTrips(); // Reload with fresh stats
     }
   }
 }

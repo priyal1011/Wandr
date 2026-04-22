@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:gap/gap.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart' as spi;
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
 
@@ -12,165 +13,239 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  final PageController _pageController = PageController();
+class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+  
   int _currentIndex = 0;
+  bool _isAnimating = false;
 
-  final List<OnboardingData> _slides = [
-    OnboardingData(
-      title: 'Welcome to Wandr',
-      subtitle: 'Your personal travel journal for unforgettable adventures.',
-      image: 'assets/images/onboarding_1.jpg',
+  final List<OnboardingSlide> _slides = [
+    OnboardingSlide(
+      title: 'The World is Yours\nto Wandr.',
+      subtitle: 'Swipe up to begin your journey.',
+      image: 'assets/images/onboarding/onboarding_cafe.jpg',
+      direction: SwipeDirection.up,
     ),
-    OnboardingData(
-      title: 'Preserve Moments',
-      subtitle: 'Capture photos, manage budgets, and trace your journey on the map.',
-      image: 'assets/images/onboarding_2.jpg',
+    OnboardingSlide(
+      title: 'Preserve Every\nMoment.',
+      subtitle: 'Swipe left to continue.',
+      image: 'assets/images/onboarding/onboarding_custom.jpg',
+      direction: SwipeDirection.left,
     ),
-    OnboardingData(
-      title: 'Explore Together',
-      subtitle: 'Every trip is a story. Start writing yours today.',
-      image: 'assets/images/onboarding_3.jpg',
+    OnboardingSlide(
+      title: 'Your Story,\nStart Today.',
+      subtitle: 'Swipe down to enter.',
+      image: 'assets/images/onboarding/onboarding_road.jpg',
+      direction: SwipeDirection.down,
     ),
   ];
 
-  void _onDone() {
-    getIt<InMemoryStore>().hasSeenOnboarding = true;
-    context.go('/login');
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _slideAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOutQuart),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _animController, curve: const Interval(0.0, 0.5, curve: Curves.easeIn)),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  void _handleVerticalDrag(DragUpdateDetails details) {
+    if (_isAnimating) return;
+    final slide = _slides[_currentIndex];
+    
+    if (slide.direction == SwipeDirection.up && details.delta.dy < -5) {
+      _triggerTransition();
+    } else if (slide.direction == SwipeDirection.down && details.delta.dy > 5) {
+      _triggerTransition();
+    }
+  }
+
+  void _handleHorizontalDrag(DragUpdateDetails details) {
+    if (_isAnimating) return;
+    final slide = _slides[_currentIndex];
+    
+    if (slide.direction == SwipeDirection.left && details.delta.dx < -5) {
+      _triggerTransition();
+    }
+  }
+
+  Future<void> _triggerTransition() async {
+    setState(() => _isAnimating = true);
+    
+    if (_currentIndex == _slides.length - 1) {
+      await _animController.forward();
+      getIt<InMemoryStore>().hasSeenOnboarding = true;
+      if (mounted) context.go('/login');
+    } else {
+      await _animController.forward();
+      setState(() {
+        _currentIndex++;
+        _isAnimating = false;
+      });
+      _animController.reset();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isLastPage = _currentIndex == _slides.length - 1;
+    final slide = _slides[_currentIndex];
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Background PageView
-          PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) => setState(() => _currentIndex = index),
-            itemCount: _slides.length,
-            itemBuilder: (context, index) {
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(
-                    _slides[index].image,
-                    fit: BoxFit.cover,
-                  ).animate(key: ValueKey(index)).fade(duration: 800.ms).scale(begin: const Offset(1.1, 1.1), end: const Offset(1.0, 1.0), duration: 1000.ms),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.3),
-                          Colors.black.withValues(alpha: 0.0),
-                          Colors.black.withValues(alpha: 0.8),
-                        ],
-                      ),
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onVerticalDragUpdate: _handleVerticalDrag,
+        onHorizontalDragUpdate: _handleHorizontalDrag,
+        child: AnimatedBuilder(
+          animation: _animController,
+          builder: (context, child) {
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                // 1. DYNAMIC BACKGROUND
+                Opacity(
+                  opacity: _fadeAnimation.value,
+                  child: Transform.scale(
+                    scale: 1.0 + (0.2 * _slideAnimation.value),
+                    child: Image.asset(
+                      slide.image,
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.high,
                     ),
                   ),
-                ],
-              );
-            },
-          ),
+                ),
 
-          // Content Layer
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Spacer(),
-                  Animate(
-                    key: ValueKey(_currentIndex),
-                    effects: const [FadeEffect(duration: Duration(milliseconds: 600)), SlideEffect(begin: Offset(0, 0.05))],
+                // 2. MODERN OVERLAY
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.1),
+                        Colors.black.withValues(alpha: 0.7),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // 3. MINIMAL CONTENT
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 60),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          _slides[_currentIndex].title,
-                          style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -1,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _slides[_currentIndex].subtitle,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            height: 1.5,
-                            fontSize: 18,
+                        const Spacer(),
+                        Opacity(
+                          opacity: _fadeAnimation.value,
+                          child: Transform.translate(
+                            offset: Offset(0, -50 * _slideAnimation.value),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  slide.title,
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontSize: size.width > 600 ? 64 : 44,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -1.5,
+                                    height: 1.0,
+                                  ),
+                                ),
+                                const Gap(20),
+                                Text(
+                                  slide.subtitle.toUpperCase(),
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white.withValues(alpha: 0.5),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 4.0,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 64),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      spi.SmoothPageIndicator(
-                        controller: _pageController,
-                        count: _slides.length,
-                        effect: spi.ExpandingDotsEffect(
-                          spacing: 8.0,
-                          radius: 12.0,
-                          dotWidth: 12.0,
-                          dotHeight: 8.0,
-                          dotColor: Colors.white.withValues(alpha: 0.3),
-                          activeDotColor: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      ElevatedButton(
-                        onPressed: () {
-                          if (isLastPage) {
-                            _onDone();
-                          } else {
-                            _pageController.nextPage(
-                              duration: const Duration(milliseconds: 600),
-                              curve: Curves.fastOutSlowIn,
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(isLastPage ? 'Get Started' : 'Next', style: const TextStyle(fontWeight: FontWeight.bold)),
-                            const SizedBox(width: 8),
-                            Icon(isLastPage ? Icons.rocket_launch : Icons.arrow_forward, size: 18),
-                          ],
-                        ),
-                      ).animate().scale(delay: 200.ms, duration: 400.ms, curve: Curves.easeOutBack),
-                    ],
+                ),
+                
+                // 4. TRANSITION HINT (Subtle)
+                if (!_isAnimating)
+                  Positioned(
+                    bottom: 40,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Icon(
+                        _getIconForDirection(slide.direction),
+                        color: Colors.white.withValues(alpha: 0.3),
+                        size: 30,
+                      )
+                      .animate(onPlay: (c) => c.repeat())
+                      .move(begin: _getOffsetForDirection(slide.direction), 
+                            end: Offset.zero, 
+                            duration: 1200.ms, 
+                            curve: Curves.easeInOut),
+                    ),
                   ),
-                ],
-              ),
-            ),
-          ),
-        ],
+              ],
+            );
+          },
+        ),
       ),
     );
   }
+
+  IconData _getIconForDirection(SwipeDirection dir) {
+    return switch (dir) {
+      SwipeDirection.up => Icons.keyboard_arrow_up_rounded,
+      SwipeDirection.left => Icons.keyboard_arrow_left_rounded, // Corrected to point left
+      SwipeDirection.down => Icons.keyboard_arrow_down_rounded,
+    };
+  }
+
+  Offset _getOffsetForDirection(SwipeDirection dir) {
+    return switch (dir) {
+      SwipeDirection.up => const Offset(0, 10),
+      SwipeDirection.left => const Offset(10, 0), // Bounce from right to emphasize left swipe
+      SwipeDirection.down => const Offset(0, -10),
+    };
+  }
 }
 
-class OnboardingData {
+enum SwipeDirection { up, left, down }
+
+class OnboardingSlide {
   final String title;
   final String subtitle;
   final String image;
+  final SwipeDirection direction;
 
-  OnboardingData({required this.title, required this.subtitle, required this.image});
+  OnboardingSlide({
+    required this.title,
+    required this.subtitle,
+    required this.image,
+    required this.direction,
+  });
 }
