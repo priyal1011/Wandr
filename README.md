@@ -1,17 +1,19 @@
-# wandr
+Wandr — Travel Companion
 
-A new Flutter project.
+Wandr is an AI-powered travel application that brings trip planning, budgeting, journaling, and location mapping into a single platform. It uses the Google Gemini API to generate structured, day-wise travel itineraries based on user prompts.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+✨ Features
+🤖 AI Itinerary Generation
+Generate structured day-wise travel plans using the Google Gemini API.
+🗺️ Interactive Maps
+Explore and pin locations using OpenStreetMap with flutter_map.
+💰 Budget Tracker
+Track travel expenses and receive real-time budget alerts.
+📸 Travel Memories
+Save photos and connect memories with trips, itineraries, and expenses.
+📊 Mosaic Dashboard
+View destinations, travel dates, images, and budget usage through an interactive dashboard.
+📱 Responsive UI
+Modern interface featuring glassmorphism, parallax scrolling, and smooth animations.
+💾 Offline-First Storage
+Manage trips even without an internet connection using SharedPreferences and Path Provider.
