@@ -4,8 +4,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:fluttermoji/fluttermoji.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import '../../../../theme/app_theme.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -13,52 +17,87 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = getIt<InMemoryStore>();
-    final user = store.currentUser;
-    final trips = store.trips;
-    
-    final now = DateTime.now();
-    final upcomingTrips = trips.where((t) => !t.endDate.isBefore(now)).toList();
-    final pastTrips = trips.where((t) => t.endDate.isBefore(now)).toList();
 
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          _HomeAppBar(user: user),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: _StatsBoard(
-                      tripCount: trips.length,
-                      placeCount: trips.fold<int>(0, (sum, t) => sum + (t.itinerary == null ? 0 : t.itinerary!.fold<int>(0, (s, d) => s + d.places.length))),
-                      photoCount: trips.fold<int>(0, (sum, t) => sum + (t.photos?.length ?? 0)),
+    return ListenableBuilder(
+      listenable: store,
+      builder: (context, _) {
+        final user = store.currentUser;
+        final trips = store.trips;
+
+        final now = DateTime.now();
+        final upcomingTrips = trips
+            .where((t) => !t.endDate.isBefore(now))
+            .toList();
+        final pastTrips = trips.where((t) => t.endDate.isBefore(now)).toList();
+
+        return Scaffold(
+          body: Skeletonizer(
+            enabled: trips.isEmpty && user == null,
+            child: CustomScrollView(
+              slivers: [
+                _HomeAppBar(user: user),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 0,
+                      vertical: 8,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
+                              child: _StatsBoard(
+                                tripCount: trips.length,
+                                placeCount: trips.fold<int>(
+                                  0,
+                                  (sum, t) =>
+                                      sum +
+                                      (t.itinerary == null
+                                          ? 0
+                                          : t.itinerary!.fold<int>(
+                                              0,
+                                              (s, d) => s + d.places.length,
+                                            )),
+                                ),
+                                photoCount: trips.fold<int>(
+                                  0,
+                                  (sum, t) => sum + (t.photos?.length ?? 0),
+                                ),
+                                currency: store.currentCurrency,
+                              ),
+                            )
+                            .animate()
+                            .fadeIn(duration: 600.ms)
+                            .slideY(begin: 0.1, end: 0),
+                        const Gap(24),
+                        _SectionHeader(
+                          title: 'Upcoming Adventures',
+                          onSeeAll: () => context.push('/trips/upcoming'),
+                        ),
+                        const Gap(12),
+                        _UpcomingHorizontalList(trips: upcomingTrips),
+                        const Gap(24),
+                        _SectionHeader(
+                          title: 'Memorable Journeys',
+                          onSeeAll: () => context.push('/trips/past'),
+                        ),
+                        const Gap(12),
+                        _PastJourneysCarousel(
+                          trips: pastTrips.take(5).toList(),
+                        ),
+                        const Gap(100),
+                      ],
                     ),
                   ),
-                  const Gap(24),
-                  _SectionHeader(
-                    title: 'Upcoming Adventures',
-                    onSeeAll: () => context.push('/trips/upcoming'),
-                  ),
-                  const Gap(12),
-                  _UpcomingHorizontalList(trips: upcomingTrips),
-                  const Gap(24),
-                  _SectionHeader(
-                    title: 'Past Journeys',
-                    onSeeAll: () => context.push('/trips/past'),
-                  ),
-                  const Gap(12),
-                  _PastVerticalList(trips: pastTrips.take(3).toList()),
-                  const Gap(100),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -67,10 +106,21 @@ class _HomeAppBar extends StatelessWidget {
   final UserModel? user;
   const _HomeAppBar({this.user});
 
-  ImageProvider _getAvatarImage(UserModel? user) {
-    if (user?.photoUrl == null) return const NetworkImage('https://i.pravatar.cc/150?u=wandr');
-    if (user!.photoUrl!.startsWith('http')) return NetworkImage(user.photoUrl!);
-    return FileImage(File(user.photoUrl!));
+  Widget _getAvatar(BuildContext context) {
+    if (user?.photoUrl != null && user!.photoUrl!.isNotEmpty) {
+      final photoUrl = user!.photoUrl!;
+      final image = photoUrl.startsWith('http')
+          ? NetworkImage(photoUrl)
+          : FileImage(File(photoUrl)) as ImageProvider;
+      return CircleAvatar(radius: 20, backgroundImage: image);
+    }
+
+    return FluttermojiCircleAvatar(
+      radius: 20,
+      backgroundColor: Theme.of(
+        context,
+      ).colorScheme.primary.withValues(alpha: 0.1),
+    );
   }
 
   @override
@@ -99,12 +149,14 @@ class _HomeAppBar extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Where shall we wandr?',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                    fontWeight: FontWeight.bold,
+                  'WANDR'.toUpperCase(),
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 4,
                   ),
-                ).animate().fadeIn(delay: 400.ms),
+                ),
               ],
             ),
             GestureDetector(
@@ -112,9 +164,10 @@ class _HomeAppBar extends StatelessWidget {
               child: Hero(
                 tag: 'profile_avatar',
                 child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                  backgroundImage: _getAvatarImage(user),
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.1),
+                  child: _getAvatar(context),
                 ),
               ),
             ),
@@ -137,10 +190,21 @@ class _SectionHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
           TextButton(
             onPressed: onSeeAll,
-            child: Text('See All', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
+            child: Text(
+              'See All',
+              style: TextStyle(
+                color: AppTheme.accentCyan,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -154,144 +218,236 @@ class _UpcomingHorizontalList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (trips.isEmpty) return _EmptySection(msg: 'No upcoming trips planned.');
-    
+    if (trips.isEmpty) return const SizedBox.shrink();
+
     return SizedBox(
-      height: 280,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 200,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
         itemCount: trips.length,
+        separatorBuilder: (context, index) => const Gap(16),
         itemBuilder: (context, index) {
           final trip = trips[index];
-          return Container(
-            width: 300,
-            margin: const EdgeInsets.symmetric(horizontal: 8),
-            child: _TripCard(trip: trip, isHorizontal: true),
-          ).animate(delay: Duration(milliseconds: index * 100)).fadeIn(duration: 400.ms).flipH(begin: -0.1, end: 0, duration: 600.ms, curve: Curves.easeOutQuart).slideX(begin: 0.2);
+          return GestureDetector(
+            onTap: () => context.push('/trip/${trip.id}'),
+            child: Hero(
+              tag: 'trip_cover_${trip.id}',
+              child: Container(
+                width: 280,
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  color: Theme.of(context).colorScheme.surface,
+                ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Background Image
+                    trip.coverPhoto != null && trip.coverPhoto!.isNotEmpty
+                        ? (trip.coverPhoto!.startsWith('http')
+                              ? Image.network(
+                                  trip.coverPhoto!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (c, e, s) =>
+                                      Container(color: Colors.grey.shade900),
+                                )
+                              : Image.file(
+                                  File(trip.coverPhoto!),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (c, e, s) =>
+                                      Container(color: Colors.grey.shade900),
+                                ))
+                        : Container(color: Colors.grey.shade900),
+
+                    // Dark Gradient Overlay
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.8),
+                          ],
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            trip.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          Text(
+                            trip.destination,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ).animate().fadeIn(delay: (index * 100).ms).slideX(begin: 0.2);
         },
       ),
     );
   }
 }
 
-class _PastVerticalList extends StatelessWidget {
+class _PastJourneysCarousel extends StatelessWidget {
   final List<TripModel> trips;
-  const _PastVerticalList({required this.trips});
+  const _PastJourneysCarousel({required this.trips});
 
   @override
   Widget build(BuildContext context) {
-    if (trips.isEmpty) return _EmptySection(msg: 'No past journeys yet.');
-    
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: trips.length,
-      itemBuilder: (context, index) => Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: _TripCard(trip: trips[index]),
-      ),
-    );
-  }
-}
-
-class _EmptySection extends StatelessWidget {
-  final String msg;
-  const _EmptySection({required this.msg});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      child: Text(msg, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3))),
-    );
-  }
-}
-
-class _TripCard extends StatelessWidget {
-  final TripModel trip;
-  final bool isHorizontal;
-  const _TripCard({required this.trip, this.isHorizontal = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => context.push('/trip/${trip.id}'),
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          color: Theme.of(context).colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-             ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                child: trip.coverPhoto != null && !trip.coverPhoto!.startsWith('http')
-                    ? Image.file(
-                        File(trip.coverPhoto!),
-                        width: double.infinity,
-                        height: isHorizontal ? 180 : 120,
-                        fit: BoxFit.cover,
-                        errorBuilder: (c, e, s) => Container(height: 180, color: Colors.grey.shade300, child: const Icon(Icons.broken_image, color: Colors.grey)),
-                      )
-                    : Image.network(
-                        trip.coverPhoto ?? 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
-                        width: double.infinity,
-                        height: isHorizontal ? 180 : 120,
-                        fit: BoxFit.cover,
-                        errorBuilder: (c, e, s) => Container(height: 180, color: Colors.grey.shade300, child: const Icon(Icons.broken_image, color: Colors.grey)),
-                      ),
+    if (trips.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Column(
+            children: [
+              Icon(
+                Icons.auto_awesome,
+                size: 40,
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.2),
               ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+              const Gap(12),
+              Text(
+                "Your first adventure awaits!",
+                style: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.3),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 120,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        scrollDirection: Axis.horizontal,
+        itemCount: trips.length,
+        separatorBuilder: (context, index) => const Gap(12),
+        itemBuilder: (context, index) {
+          final trip = trips[index];
+          return GestureDetector(
+            onTap: () => context.push('/trip/${trip.id}'),
+            child: Container(
+              width: 240,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
               child: Row(
                 children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child:
+                        trip.coverPhoto != null && trip.coverPhoto!.isNotEmpty
+                        ? (trip.coverPhoto!.startsWith('http')
+                              ? Image.network(
+                                  trip.coverPhoto!,
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (c, e, s) => Container(
+                                    width: 80,
+                                    height: 80,
+                                    color: Colors.grey.shade300,
+                                    child: const Icon(
+                                      Icons.broken_image,
+                                      size: 20,
+                                    ),
+                                  ),
+                                )
+                              : Image.file(
+                                  File(trip.coverPhoto!),
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (c, e, s) => Container(
+                                    width: 80,
+                                    height: 80,
+                                    color: Colors.grey.shade300,
+                                    child: const Icon(
+                                      Icons.broken_image,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ))
+                        : Container(
+                            width: 80,
+                            height: 80,
+                            color: Colors.grey.shade300,
+                            child: const Icon(
+                              Icons.image_outlined,
+                              size: 20,
+                              color: Colors.grey,
+                            ),
+                          ),
+                  ),
+                  const Gap(12),
                   Expanded(
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(trip.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        const Gap(4),
-                        Row(
-                          children: [
-                            Icon(Icons.place_outlined, size: 12, color: Theme.of(context).colorScheme.primary),
-                            const Gap(4),
-                            Text(trip.destination, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 11, fontWeight: FontWeight.bold)),
-                          ],
+                        Text(
+                          trip.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          DateFormat('MMM yyyy').format(trip.startDate),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        DateFormat('MMM d').format(trip.startDate),
-                        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        DateFormat('MMM d').format(trip.endDate),
-                        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 10),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
-          ],
-        ),
+          ).animate().fadeIn(delay: (index * 100).ms).slideY(begin: 0.2);
+        },
       ),
-    );
+    ).animate().fadeIn();
   }
 }
 
@@ -299,8 +455,14 @@ class _StatsBoard extends StatelessWidget {
   final int tripCount;
   final int photoCount;
   final int placeCount;
+  final String currency;
 
-  const _StatsBoard({required this.tripCount, required this.photoCount, required this.placeCount});
+  const _StatsBoard({
+    required this.tripCount,
+    required this.photoCount,
+    required this.placeCount,
+    required this.currency,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -320,9 +482,24 @@ class _StatsBoard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _StatItem(label: 'Trips', value: tripCount.toString(), icon: Icons.map_outlined, color: Colors.indigo),
-          _StatItem(label: 'Places', value: placeCount.toString(), icon: Icons.location_on_outlined, color: Colors.teal),
-          _StatItem(label: 'Photos', value: photoCount.toString(), icon: Icons.photo_library_outlined, color: Colors.amber),
+          _StatItem(
+            label: 'Trips',
+            value: tripCount.toString(),
+            icon: Icons.map_outlined,
+            color: AppTheme.accentCyan,
+          ),
+          _StatItem(
+            label: 'Places',
+            value: placeCount.toString(),
+            icon: Icons.location_on_outlined,
+            color: AppTheme.accentBlue,
+          ),
+          _StatItem(
+            label: 'Photos',
+            value: photoCount.toString(),
+            icon: Icons.photo_library_outlined,
+            color: AppTheme.accentEmerald,
+          ),
         ],
       ),
     ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1);
@@ -335,28 +512,37 @@ class _StatItem extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _StatItem({required this.label, required this.value, required this.icon, required this.color});
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 24),
-        ),
+        Icon(icon, color: color, size: 28),
         const Gap(12),
         Text(
           value,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22, letterSpacing: -0.5),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            letterSpacing: -0.5,
+          ),
         ),
         Text(
-          label,
-          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold),
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 10,
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.4),
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1,
+          ),
         ),
       ],
     );

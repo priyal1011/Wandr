@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 import 'package:gap/gap.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'pincushion_distortion.dart';
 
 class MainScaffold extends StatefulWidget {
   final Widget child;
@@ -40,16 +42,32 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenTypeLayout.builder(
-      mobile: (context) => _MobileScaffold(
-        selectedIndex: _getSelectedIndex(context),
-        onItemTapped: (index) => _onItemTapped(index, context),
-        child: widget.child,
-      ),
-      tablet: (context) => _DesktopScaffold(
-        selectedIndex: _getSelectedIndex(context),
-        onItemTapped: (index) => _onItemTapped(index, context),
-        child: widget.child,
+    final selectedIndex = _getSelectedIndex(context);
+
+    // Apply shader animation only when entering the Memories tab (index 2)
+    return Animate(
+      effects: [
+        if (selectedIndex == 2)
+          CustomEffect(
+            begin: 1.5, // High distortion
+            end: 0.0, // Crystal clear
+            duration: 800.ms,
+            curve: Curves.easeOutQuart,
+            builder: (context, value, child) =>
+                PincushionDistortion(distortionAmount: value, child: child),
+          ),
+      ],
+      child: ScreenTypeLayout.builder(
+        mobile: (context) => _MobileScaffold(
+          selectedIndex: selectedIndex,
+          onItemTapped: (index) => _onItemTapped(index, context),
+          child: widget.child,
+        ),
+        tablet: (context) => _DesktopScaffold(
+          selectedIndex: selectedIndex,
+          onItemTapped: (index) => _onItemTapped(index, context),
+          child: widget.child,
+        ),
       ),
     );
   }
@@ -76,25 +94,51 @@ class _MobileScaffold extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           height: 72,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
+            color: Theme.of(
+              context,
+            ).colorScheme.surface.withValues(alpha: 0.95),
             borderRadius: BorderRadius.circular(36),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 40,
-                spreadRadius: 2,
-                offset: const Offset(0, 10),
-              ),
-            ],
-            border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05)),
+            // boxShadow: [
+            //   BoxShadow(
+            //     color: Colors.black.withValues(alpha: 0.2),
+            //     blurRadius: 10,
+            //     spreadRadius: 2,
+            //     offset: const Offset(0, 10),
+            //   ),
+            // ],
+            border: Border.all(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.05),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _NavItem(icon: Icons.explore_outlined, label: 'Trips', isSelected: selectedIndex == 0, onTap: () => onItemTapped(0)),
-              _NavItem(icon: Icons.add_circle_outline, label: 'Create', isSelected: selectedIndex == 1, onTap: () => onItemTapped(1)),
-              _NavItem(icon: Icons.auto_awesome_mosaic_outlined, label: 'Memories', isSelected: selectedIndex == 2, onTap: () => onItemTapped(2)),
-              _NavItem(icon: Icons.settings_outlined, label: 'Settings', isSelected: selectedIndex == 3, onTap: () => onItemTapped(3)),
+              _NavItem(
+                icon: Icons.explore_outlined,
+                label: 'Trips',
+                isSelected: selectedIndex == 0,
+                onTap: () => onItemTapped(0),
+              ),
+              _NavItem(
+                icon: Icons.add_circle_outline,
+                label: 'Create',
+                isSelected: selectedIndex == 1,
+                onTap: () => onItemTapped(1),
+              ),
+              _NavItem(
+                icon: Icons.auto_awesome_mosaic_outlined,
+                label: 'Memories',
+                isSelected: selectedIndex == 2,
+                onTap: () => onItemTapped(2),
+              ),
+              _NavItem(
+                icon: Icons.settings_outlined,
+                label: 'Settings',
+                isSelected: selectedIndex == 3,
+                onTap: () => onItemTapped(3),
+              ),
             ],
           ),
         ),
@@ -109,7 +153,12 @@ class _NavItem extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _NavItem({required this.icon, required this.label, required this.isSelected, required this.onTap});
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +170,9 @@ class _NavItem extends StatelessWidget {
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -129,7 +180,11 @@ class _NavItem extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.5),
               size: 26,
             ),
             if (isSelected) ...[
@@ -171,17 +226,37 @@ class _DesktopScaffold extends StatelessWidget {
             onDestinationSelected: onItemTapped,
             labelType: NavigationRailLabelType.all,
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            indicatorColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-            selectedIconTheme: IconThemeData(color: Theme.of(context).colorScheme.primary),
+            indicatorColor: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.1),
+            selectedIconTheme: IconThemeData(
+              color: Theme.of(context).colorScheme.primary,
+            ),
             leading: Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Icon(Icons.travel_explore, size: 32, color: Theme.of(context).colorScheme.primary),
+              child: Icon(
+                Icons.travel_explore,
+                size: 32,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             destinations: const [
-              NavigationRailDestination(icon: Icon(Icons.explore_outlined), label: Text('Trips')),
-              NavigationRailDestination(icon: Icon(Icons.add_circle_outline), label: Text('Create')),
-              NavigationRailDestination(icon: Icon(Icons.auto_awesome_mosaic_outlined), label: Text('Memories')),
-              NavigationRailDestination(icon: Icon(Icons.settings_outlined), label: Text('Settings')),
+              NavigationRailDestination(
+                icon: Icon(Icons.explore_outlined),
+                label: Text('Trips'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.add_circle_outline),
+                label: Text('Create'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.auto_awesome_mosaic_outlined),
+                label: Text('Memories'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.settings_outlined),
+                label: Text('Settings'),
+              ),
             ],
           ),
           const VerticalDivider(thickness: 1, width: 1),

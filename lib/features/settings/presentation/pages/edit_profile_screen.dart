@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:fluttermoji/fluttermoji.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import '../../../../theme/app_theme.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -64,14 +66,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       email: _emailController.text,
       password: currentUser.password,
       photoUrl: _currentPhoto,
+      fluttermojiCode: currentUser.fluttermojiCode,
     );
+    store.saveToDisk();
     context.pop();
   }
 
-  ImageProvider _getAvatarImage() {
-    if (_currentPhoto == null) return const NetworkImage('https://i.pravatar.cc/150?u=wandr');
-    if (_currentPhoto!.startsWith('http')) return NetworkImage(_currentPhoto!);
-    return FileImage(File(_currentPhoto!));
+  Widget _getAvatarWidget() {
+    if (_currentPhoto != null && _currentPhoto!.isNotEmpty) {
+      final isNetwork = _currentPhoto!.startsWith('http');
+      return CircleAvatar(
+        radius: 70,
+        backgroundColor: AppTheme.accentCyan.withValues(alpha: 0.1),
+        child: ClipOval(
+          child: isNetwork 
+            ? Image.network(_currentPhoto!, fit: BoxFit.cover, width: 140, height: 140, errorBuilder: (_, _, _) => const Icon(Icons.person, size: 50))
+            : Image.file(File(_currentPhoto!), fit: BoxFit.cover, width: 140, height: 140, errorBuilder: (_, _, _) => const Icon(Icons.person, size: 50)),
+        ),
+      );
+    }
+    
+    return FluttermojiCircleAvatar(
+      radius: 70,
+      backgroundColor: AppTheme.accentCyan.withValues(alpha: 0.1),
+    );
   }
 
   @override
@@ -96,11 +114,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             Center(
               child: Stack(
                 children: [
-                  CircleAvatar(
-                    radius: 70,
-                    backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                    backgroundImage: _getAvatarImage(),
-                  ),
+                  _getAvatarWidget(),
                   Positioned(
                     bottom: 0,
                     right: 4,
@@ -118,6 +132,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ),
                 ],
+              ),
+            ),
+            const Gap(16),
+            TextButton.icon(
+              onPressed: () async {
+                await context.push('/settings/avatar-studio');
+                setState(() {
+                  _currentPhoto = null; // Clear photo to show updated fluttermoji
+                });
+              },
+              icon: const Icon(Icons.face),
+              label: const Text('CUSTOMIZE AVATAR'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.accentCyan,
+                textStyle: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 12),
               ),
             ),
             const Gap(48),
@@ -139,11 +168,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
             const Gap(32),
-            Text(
-              'Your profile data is synced across your devices.',
-              style: TextStyle(color: Colors.grey[500], fontSize: 13),
-              textAlign: TextAlign.center,
-            ),
           ],
         ),
       ),
