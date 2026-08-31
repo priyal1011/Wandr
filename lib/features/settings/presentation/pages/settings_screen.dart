@@ -2,8 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import '../../../../models/user_model.dart';
+import '../../../../models/app_settings.dart';
+import '../../../../theme/app_theme.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -24,7 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 120),
         children: [
           _ProfileSection(user: user),
           const Gap(32),
@@ -37,10 +42,61 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: isDarkMode,
               onChanged: (v) {
-                setState(() => store.settings = AppSettings(isDarkMode: v));
+                store.settings = AppSettings(isDarkMode: v, currency: store.currentCurrency);
                 store.saveToDisk();
                 // Notify the main app state to rebuild with new theme
                 context.findAncestorStateOfType<WandrAppState>()?.toggleTheme(v);
+                setState(() {});
+              },
+            ),
+          ),
+          _SettingTile(
+            title: 'Main Currency',
+            subtitle: 'Format for all stats',
+            icon: Icons.currency_exchange_outlined,
+            trailing: ActionChip(
+              label: Text(store.currentCurrency, style: const TextStyle(fontWeight: FontWeight.bold)),
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+                  builder: (context) => Container(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Select Currency', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const Gap(16),
+                        Expanded(
+                          child: GridView.builder(
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 5, mainAxisSpacing: 8, crossAxisSpacing: 8),
+                            itemCount: InMemoryStore.availableCurrencies.length,
+                            itemBuilder: (context, index) {
+                              final c = InMemoryStore.availableCurrencies[index];
+                              final isSel = store.currentCurrency == c;
+                              return InkWell(
+                                onTap: () {
+                                  store.updateCurrency(c);
+                                  Navigator.pop(context);
+                                  setState(() {});
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: isSel ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(c, style: TextStyle(fontWeight: FontWeight.bold, color: isSel ? Colors.white : null)),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
               },
             ),
           ),
@@ -60,14 +116,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: 'Privacy & Security',
             subtitle: 'Change password',
             icon: Icons.lock_outline,
-            // onTap: () => context.push('/settings/change-password'),
+            onTap: () => context.push('/settings/privacy-security'),
           ),
           const Gap(32),
           ElevatedButton.icon(
-            onPressed: () {
-              store.currentUser = null;
-              context.go('/login');
-            },
+            onPressed: () => context.read<AuthCubit>().logout(),
             icon: const Icon(Icons.logout, color: Colors.red),
             label: const Text('Logout', style: TextStyle(color: Colors.red)),
             style: ElevatedButton.styleFrom(
@@ -88,10 +141,27 @@ class _ProfileSection extends StatelessWidget {
   final UserModel? user;
   const _ProfileSection({this.user});
 
-  ImageProvider _getAvatarImage() {
-    if (user?.photoUrl == null) return const NetworkImage('https://i.pravatar.cc/150?u=wandr');
-    if (user!.photoUrl!.startsWith('http')) return NetworkImage(user!.photoUrl!);
-    return FileImage(File(user!.photoUrl!));
+  Widget _getAvatarWidget(BuildContext context) {
+    if (user?.photoUrl != null && user!.photoUrl!.isNotEmpty) {
+      final photoUrl = user!.photoUrl!;
+      final isNetwork = photoUrl.startsWith('http');
+      
+      return CircleAvatar(
+        radius: 35,
+        backgroundColor: Colors.white24,
+        child: ClipOval(
+          child: isNetwork 
+            ? Image.network(photoUrl, fit: BoxFit.cover, width: 70, height: 70, errorBuilder: (_, _, _) => const Icon(Icons.person, color: Colors.white))
+            : Image.file(File(photoUrl), fit: BoxFit.cover, width: 70, height: 70, errorBuilder: (_, _, _) => const Icon(Icons.person, color: Colors.white)),
+        ),
+      );
+    }
+    
+    return CircleAvatar(
+      radius: 35,
+      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+      child: Icon(Icons.person, color: Theme.of(context).colorScheme.primary, size: 40),
+    );
   }
 
   @override
@@ -99,15 +169,21 @@ class _ProfileSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary,
+        gradient: AppTheme.brandGradient,
         borderRadius: BorderRadius.circular(32),
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: const Color.fromARGB(255, 0, 101, 148).withValues(alpha: 0.2),
+        //     blurRadius: 20,
+        //     offset: const Offset(0, 10),
+        //   ),
+        // ],
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 35,
-            backgroundColor: Colors.white24,
-            backgroundImage: _getAvatarImage(),
+          Hero(
+            tag: 'profile_avatar',
+            child: _getAvatarWidget(context),
           ),
           const Gap(16),
           Expanded(

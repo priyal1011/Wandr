@@ -1,6 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttermoji/fluttermoji.dart';
 import '../../../../core/in_memory_store.dart';
 import '../../../../main.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../models/user_model.dart';
 
 abstract class AuthState {}
 
@@ -36,9 +39,69 @@ class AuthCubit extends Cubit<AuthState> {
     emit(AuthSuccess());
   }
 
-  void logout() {
+  Future<void> setAuthenticated() async {
     final store = getIt<InMemoryStore>();
-    store.currentUser = null;
+    
+    // SYNC AVATAR FOR THIS USER
+    if (store.currentUser?.fluttermojiCode != null && store.currentUser!.fluttermojiCode!.isNotEmpty) {
+      FluttermojiFunctions().decodeFluttermojifromString(store.currentUser!.fluttermojiCode!);
+    }
+    
+    emit(AuthSuccess());
+  }
+
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    emit(AuthLoading());
+    try {
+      final store = getIt<InMemoryStore>();
+      final currentUser = FirebaseAuth.instance.currentUser;
+
+      // Update in Firebase if logged in
+      if (currentUser != null && currentUser.email != null) {
+        AuthCredential credential = EmailAuthProvider.credential(
+          email: currentUser.email!,
+          password: currentPassword,
+        );
+        await currentUser.reauthenticateWithCredential(credential);
+        await currentUser.updatePassword(newPassword);
+      }
+
+      // Update local store anyway for UI consistency
+      if (store.currentUser != null && store.currentUser!.password == currentPassword) {
+        store.currentUser = store.currentUser!.copyWith(password: newPassword);
+        await store.saveToDisk();
+        emit(AuthSuccess());
+      } else {
+        emit(AuthError('Incorrect current password.'));
+      }
+    } catch (e) {
+      emit(AuthError('Failed to change password.'));
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    emit(AuthLoading());
+    try {
+      final store = getIt<InMemoryStore>();
+      final currentUser = FirebaseAuth.instance.currentUser;
+      
+      if (currentUser != null) {
+        await currentUser.delete();
+      }
+      
+      await store.resetData();
+      // Clear shared avatar state so next user starts fresh
+      // Note: Fluttermoji doesn't have a direct 'clear' but saving a default/empty can help
+      
+      emit(AuthInitial()); // Reset to initial state to trigger router redirect
+    } catch (e) {
+      emit(AuthError('Failed to delete account. You may need to log in again.'));
+    }
+  }
+  Future<void> logout() async {
+    final store = getIt<InMemoryStore>();
+    await FirebaseAuth.instance.signOut();
+    await store.resetData();
     emit(AuthInitial());
   }
 }

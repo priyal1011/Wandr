@@ -14,6 +14,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
   bool _isLoading = false;
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
@@ -52,8 +58,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             const Text('Enter your email and we\'ll send a link to reset your password.', style: TextStyle(color: Colors.grey)),
             const Gap(32),
             TextFormField(
-              controller: _emailController,
+              stylusHandwritingEnabled: false,
+controller: _emailController,
               keyboardType: TextInputType.emailAddress,
+                              magnifierConfiguration: TextMagnifierConfiguration.disabled,
               decoration: InputDecoration(
                 labelText: 'Email Address',
                 prefixIcon: const Icon(Icons.email_outlined),

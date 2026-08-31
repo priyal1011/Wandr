@@ -16,7 +16,13 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {
-    project.evaluationDependsOn(":app")
+    project.configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "androidx.core" && (requested.name == "core" || requested.name == "core-ktx")) {
+                useVersion("1.15.0")
+            }
+        }
+    }
 }
 
 subprojects {
